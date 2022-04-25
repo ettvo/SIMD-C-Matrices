@@ -49,7 +49,8 @@ void rand_matrix(matrix *result, unsigned int seed, double low, double high) {
  */
 double get(matrix *mat, int row, int col) {
     // Task 1.1 TODO
-    return mat->data[row*col + col]; // need to check whether I need to subtract 1 from row and col
+    int index = mat->cols * row + col;
+    return mat->data[index]; // need to check whether I need to subtract 1 from row and col
 }
 
 /*
@@ -58,7 +59,8 @@ double get(matrix *mat, int row, int col) {
  */
 void set(matrix *mat, int row, int col, double val) {
     // Task 1.1 TODO
-    mat->data[row*col + col] = val;
+    int index = mat->cols * row + col;
+    mat->data[index] = val;
 }
 
 /*
@@ -102,7 +104,8 @@ int allocate_matrix(matrix **mat, int rows, int cols) {
     matrix_struct->ref_cnt = 1;
     matrix_struct->rows = rows;
     matrix_struct->cols = cols;
-    mat[0] = matrix_struct; // use & ?
+    // mat[0] = matrix_struct; // use & ?
+    *mat = matrix_struct;
 
     for (int curr_row = 0; curr_row < rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < cols; curr_col += 1) {
@@ -192,7 +195,8 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int offset, int rows, int co
     // 6. Increment the `ref_cnt` field of the `from` struct by 1.
     from->ref_cnt += 1;
     // 7. Store the address of the allocated matrix struct at the location `mat` is pointing at.
-    mat[0] = new_mat;
+    // mat[0] = new_mat;
+    *mat = new_mat;
     // 8. Return 0 upon success.
     return 0;
 }

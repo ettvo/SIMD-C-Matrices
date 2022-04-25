@@ -17,6 +17,7 @@ void get_test(void) {
       set(mat, i, j, i * 2 + j);
     }
   }
+  printf("get: %f, should be: %d", get(mat, 0, 0), 0);
   CU_ASSERT_EQUAL(get(mat, 0, 0), 0);
   CU_ASSERT_EQUAL(get(mat, 0, 1), 1);
   CU_ASSERT_EQUAL(get(mat, 1, 0), 2);
