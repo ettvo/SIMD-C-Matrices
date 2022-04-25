@@ -142,7 +142,7 @@ void deallocate_matrix(matrix *mat) {
     } else {
         deallocate_matrix(mat->parent);
         // may have an issue if all data points to same thing --> don't free mat->data
-        deallocate_matrix(mat); // or just free mat?
+        free(mat); // or just free mat?
     }
 }
 
@@ -171,21 +171,12 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int offset, int rows, int co
         return -2;
     }
 
-    new_mat->data = (double*)malloc(sizeof(double) * rows * cols);
-    if (new_mat->data == NULL) {
-        return -2;
-    }
-    // new_mat->data = from->data[offset..from->rows * from->cols];
+    new_mat->data = (double*)(from->data + offset);
 
     // 3. Set the `data` field of the new struct to be the `data` field of the `from` struct plus `offset`.
     // double get(matrix *mat, int row, int col)
     //int curr_col = offset % cols;
     //int curr_row = (int)(offset / cols);
-
-    for (int counter = 0; counter < rows * cols; counter += 1) {
-        double old = from->data[counter + offset];
-        new_mat->data[counter] = old;
-    }
 
     // 4. Set the number of rows and columns in the new struct according to the arguments provided.
     new_mat->cols = cols;
