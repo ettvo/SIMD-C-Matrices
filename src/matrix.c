@@ -12,6 +12,8 @@
 #include <x86intrin.h>
 #endif
 
+// TODO: current issue is with matmul --> pow + double free
+
 /* Below are some intel intrinsics that might be useful
  * void _mm256_storeu_pd (double * mem_addr, __m256d a)
  * __m256d _mm256_set1_pd (double a)
@@ -306,18 +308,20 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     int curr_row = 0;
 
     while(curr_row < result->rows) {
-        if (curr_col == result->cols) {
-            curr_col = 0;
-            curr_row += 1;
-        }
 
         // get total
-        for (int counter = 0; counter < result->rows; counter += 1) {
+        for (int counter = 0; counter < result->cols; counter += 1) {
             total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col);
         }
 
         set(result, curr_row, curr_col, total);
         curr_col += 1;
+        total = 0;
+
+        if (curr_col == result->cols) {
+            curr_col = 0;
+            curr_row += 1;
+        }
     }
     return 0;
 }

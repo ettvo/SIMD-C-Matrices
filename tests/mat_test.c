@@ -17,7 +17,6 @@ void get_test(void) {
       set(mat, i, j, i * 2 + j);
     }
   }
-  printf("get: %f, should be: %d", get(mat, 0, 0), 0);
   CU_ASSERT_EQUAL(get(mat, 0, 0), 0);
   CU_ASSERT_EQUAL(get(mat, 0, 1), 1);
   CU_ASSERT_EQUAL(get(mat, 1, 0), 2);
@@ -314,7 +313,7 @@ int main (void)
    }
 
   // Run all tests using the basic interface
-  // CU_basic_set_mode(CU_BRM_NORMAL);
+  //CU_basic_set_mode(CU_BRM_NORMAL);
   CU_basic_set_mode(CU_BRM_VERBOSE);
   CU_basic_run_tests();
   printf("\n");
