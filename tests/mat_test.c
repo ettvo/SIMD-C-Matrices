@@ -258,8 +258,11 @@ void pow_test(void) {
   set(mat, 1, 0, 1);
   set(mat, 1, 1, 0);
   pow_matrix(result, mat, 3);
+  //printf("Expected %d but got %f at row %d, col %d\n", 3, get(result, 0, 0), 0, 0);
   CU_ASSERT_EQUAL(get(result, 0, 0), 3);
+  //printf("Expected %d but got %f at row %d, col %d\n", 2, get(result, 0, 1), 0, 1);
   CU_ASSERT_EQUAL(get(result, 0, 1), 2);
+  //printf("Expected %d but got %f at row %d, col %d\n", 2, get(result, 1, 0), 1, 0);
   CU_ASSERT_EQUAL(get(result, 1, 0), 2);
   CU_ASSERT_EQUAL(get(result, 1, 1), 1);
   pow_matrix(result, mat, 10);

@@ -349,12 +349,23 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
     } else {
         mul_matrix(result, mat, mat);
         int counter = pow - 1;
+        
+        matrix *temp = NULL;
+        allocate_matrix(&temp, result->rows, result->cols);
+        fill_matrix(temp, 0);
+        double curr_val;
         while (counter > 1) {
-            mul_matrix(result, result, mat);
+            mul_matrix(temp, mat, result); // need to store in a different matrix atm
             counter -= 1;
+            for (int curr_row = 0; curr_row < result->rows; curr_row += 1) {
+                for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
+                    curr_val = get(temp, curr_row, curr_col);
+                    set(result, curr_row, curr_col, curr_val);
+                }
+            }
         }
-        //mul_matrix(result, mat, mat);
-        //pow_matrix(result, result, pow - 1); // repeatedly squares
+        deallocate_matrix(temp);
+        // issue is that result is being mutated throughout this
     }
     return 0;
 }
