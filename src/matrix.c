@@ -296,8 +296,6 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // new output = mat1 row x mat2 col
     // each entry in result = row of mat 1 * col of mat 2
     double total = 0;
-    int curr_col = 0;
-    int curr_row = 0;
     result->rows = mat1->rows;
     result->cols = mat2->cols;
     result->data = (double*)realloc(result->data, result->rows * result->cols * sizeof(double));
@@ -306,20 +304,16 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     allocate_matrix(&temp, result->rows, result->cols);
     fill_matrix(temp, 0);
 
-    while(curr_row < result->rows) {
-
+    for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
+        for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
         // get total
-        for (int counter = 0; counter < result->cols; counter += 1) {
-            total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col); // issue is with non-square dimensions
-        }
-
-        set(temp, curr_row, curr_col, total);
-        curr_col += 1;
-        total = 0;
-
-        if (curr_col == result->cols) {
-            curr_col = 0;
-            curr_row += 1;
+            for (int counter = 0; counter < mat1->cols; counter += 1) {
+                total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col); // issue is with non-square dimensions
+                // need to check that the given item has the given row or counter
+            }
+            // mat1 rows, mat2 cols, and mat1 cols == mat2 rows number sums per entry
+            set(temp, curr_row, curr_col, total);
+            total = 0;
         }
     }
 
@@ -330,6 +324,9 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             set(result, curr_row, curr_col, curr_val);
         }
     }
+
+    deallocate_matrix(temp);
+
     return 0;
 }
 
