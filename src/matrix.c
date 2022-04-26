@@ -348,7 +348,13 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
         }
     } else {
         mul_matrix(result, mat, mat);
-        pow_matrix(result, result, pow - 1);
+        int counter = pow - 1;
+        while (counter > 1) {
+            mul_matrix(result, result, mat);
+            counter -= 1;
+        }
+        //mul_matrix(result, mat, mat);
+        //pow_matrix(result, result, pow - 1); // repeatedly squares
     }
     return 0;
 }
