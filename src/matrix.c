@@ -298,21 +298,36 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     double total = 0;
     int curr_col = 0;
     int curr_row = 0;
+    result->rows = mat1->rows;
+    result->cols = mat2->cols;
+    result->data = (double*)realloc(result->data, result->rows * result->cols * sizeof(double));
+    
+    matrix *temp = NULL;
+    allocate_matrix(&temp, result->rows, result->cols);
+    fill_matrix(temp, 0);
 
     while(curr_row < result->rows) {
 
         // get total
         for (int counter = 0; counter < result->cols; counter += 1) {
-            total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col);
+            total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col); // issue is with non-square dimensions
         }
 
-        set(result, curr_row, curr_col, total);
+        set(temp, curr_row, curr_col, total);
         curr_col += 1;
         total = 0;
 
         if (curr_col == result->cols) {
             curr_col = 0;
             curr_row += 1;
+        }
+    }
+
+    double curr_val;
+    for (int curr_row = 0; curr_row < result->rows; curr_row += 1) {
+        for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
+            curr_val = get(temp, curr_row, curr_col);
+            set(result, curr_row, curr_col, curr_val);
         }
     }
     return 0;
@@ -350,22 +365,10 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
         mul_matrix(result, mat, mat);
         int counter = pow - 1;
         
-        matrix *temp = NULL;
-        allocate_matrix(&temp, result->rows, result->cols);
-        fill_matrix(temp, 0);
-        double curr_val;
         while (counter > 1) {
-            mul_matrix(temp, mat, result); // need to store in a different matrix atm
+            mul_matrix(result, mat, result);
             counter -= 1;
-            for (int curr_row = 0; curr_row < result->rows; curr_row += 1) {
-                for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
-                    curr_val = get(temp, curr_row, curr_col);
-                    set(result, curr_row, curr_col, curr_val);
-                }
-            }
         }
-        deallocate_matrix(temp);
-        // issue is that result is being mutated throughout this
     }
     return 0;
 }

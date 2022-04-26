@@ -274,6 +274,135 @@ void pow_test(void) {
   deallocate_matrix(mat);
 }
 
+void mul_comp_test1(void) {
+  matrix *result = NULL;
+  matrix *mat1 = NULL;
+  matrix *mat2 = NULL;
+
+  CU_ASSERT_EQUAL(allocate_matrix(&result, 2, 2), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat1, 2, 2), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat2, 2, 2), 0);
+
+  set(mat1, 0, 0, 3);
+  set(mat1, 0, 1, 7);
+  set(mat1, 1, 0, 4);
+  set(mat1, 1, 1, 9);
+
+  set(mat1, 0, 0, 6);
+  set(mat1, 0, 1, 2);
+  set(mat1, 1, 0, 5);
+  set(mat1, 1, 1, 8);
+
+  mul_matrix(result, mat1, mat2);
+  CU_ASSERT_EQUAL(get(result, 0, 0), 53);
+  CU_ASSERT_EQUAL(get(result, 0, 1), 62);
+  CU_ASSERT_EQUAL(get(result, 1, 0), 69);
+  CU_ASSERT_EQUAL(get(result, 1, 1), 80);
+
+  deallocate_matrix(result);
+  deallocate_matrix(mat1);
+  deallocate_matrix(mat2);
+  
+  result = NULL;
+  mat1 = NULL;
+  mat2 = NULL;
+
+  CU_ASSERT_EQUAL(allocate_matrix(&result, 3, 3), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat1, 3, 3), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat2, 3, 3), 0);
+
+  set(mat1, 0, 0, 12);
+  set(mat1, 0, 1, 8);
+  set(mat1, 0, 2, 4);
+
+  set(mat1, 1, 0, 3);
+  set(mat1, 1, 1, 17);
+  set(mat1, 1, 2, 14);
+
+  set(mat1, 2, 0, 9);
+  set(mat1, 2, 1, 8);
+  set(mat1, 2, 2, 10);
+
+
+  set(mat2, 0, 0, 5);
+  set(mat2, 0, 1, 19);
+  set(mat2, 0, 2, 3);
+
+  set(mat2, 1, 0, 6);
+  set(mat2, 1, 1, 15);
+  set(mat2, 1, 2, 9);
+
+  set(mat2, 2, 0, 7);
+  set(mat2, 2, 1, 8);
+  set(mat2, 2, 2, 16);
+
+  mul_matrix(result, mat1, mat2);
+  CU_ASSERT_EQUAL(get(result, 0, 0), 136);
+  CU_ASSERT_EQUAL(get(result, 0, 1), 380);
+  CU_ASSERT_EQUAL(get(result, 0, 2), 172);
+  CU_ASSERT_EQUAL(get(result, 1, 0), 215);
+  CU_ASSERT_EQUAL(get(result, 1, 1), 424);
+  CU_ASSERT_EQUAL(get(result, 1, 2), 386);
+  CU_ASSERT_EQUAL(get(result, 2, 0), 163);
+  CU_ASSERT_EQUAL(get(result, 2, 1), 371);
+  CU_ASSERT_EQUAL(get(result, 2, 2), 259);
+
+  deallocate_matrix(result);
+  deallocate_matrix(mat1);
+  deallocate_matrix(mat2);
+
+  // subtest 3
+  result = NULL;
+  mat1 = NULL;
+  mat2 = NULL;
+
+  CU_ASSERT_EQUAL(allocate_matrix(&result, 3, 3), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat1, 3, 3), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat2, 3, 3), 0);
+
+  set(mat1, 0, 0, 12);
+  set(mat1, 0, 1, 8);
+  set(mat1, 0, 2, 4);
+
+  set(mat1, 1, 0, 3);
+  set(mat1, 1, 1, 17);
+  set(mat1, 1, 2, 14);
+
+  set(mat1, 2, 0, 9);
+  set(mat1, 2, 1, 8);
+  set(mat1, 2, 2, 10);
+
+
+  set(mat2, 0, 0, -5);
+  set(mat2, 0, 1, -19);
+  set(mat2, 0, 2, -3);
+
+  set(mat2, 1, 0, -6);
+  set(mat2, 1, 1, -15);
+  set(mat2, 1, 2, -9);
+
+  set(mat2, 2, 0, -7);
+  set(mat2, 2, 1, -8);
+  set(mat2, 2, 2, -16);
+
+  mul_matrix(result, mat1, mat2);
+  CU_ASSERT_EQUAL(get(result, 0, 0), -136);
+  CU_ASSERT_EQUAL(get(result, 0, 1), -380);
+  CU_ASSERT_EQUAL(get(result, 0, 2), -172);
+  CU_ASSERT_EQUAL(get(result, 1, 0), -215);
+  CU_ASSERT_EQUAL(get(result, 1, 1), -424);
+  CU_ASSERT_EQUAL(get(result, 1, 2), -386);
+  CU_ASSERT_EQUAL(get(result, 2, 0), -163);
+  CU_ASSERT_EQUAL(get(result, 2, 1), -371);
+  CU_ASSERT_EQUAL(get(result, 2, 2), -259);
+
+  deallocate_matrix(result);
+  deallocate_matrix(mat1);
+  deallocate_matrix(mat2);
+
+}
+
+
 /************* Test Runner Code goes here **************/
 
 int main (void)
@@ -308,7 +437,8 @@ int main (void)
         (CU_add_test(pSuite, "alloc_ref_success_test", alloc_ref_success_test) == NULL) ||
         (CU_add_test(pSuite, "dealloc_null_test", dealloc_null_test) == NULL) ||
         (CU_add_test(pSuite, "get_test", get_test) == NULL) ||
-        (CU_add_test(pSuite, "set_test", set_test) == NULL)
+        (CU_add_test(pSuite, "set_test", set_test) == NULL) ||
+        (CU_add_test(pSuite, "mul_long_test1", set_test) == NULL)
      )
    {
       CU_cleanup_registry();
