@@ -296,6 +296,11 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // new output = mat1 row x mat2 col
     // each entry in result = row of mat 1 * col of mat 2
     double total = 0;
+    if (mat1->cols != mat2->rows) {
+        printf("Mul dimension error");
+        return -1;
+    }
+
     result->rows = mat1->rows;
     result->cols = mat2->cols;
     result->data = (double*)realloc(result->data, result->rows * result->cols * sizeof(double));
@@ -368,5 +373,22 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
         }
     }
     return 0;
+}
+
+/* 
+Transposes a given MAT and stores it in RESULT.
+*/ 
+int transpose_matrix(matrix *result, matrix *mat) {
+    if (result->cols != mat->rows || result->rows != mat->cols) {
+        return -1;
+    }
+    double val;
+    for (int mat_row = 0; mat_row < mat->rows; mat_row += 1) {
+        for (int mat_col = 0; mat_col < mat->cols; mat_col += 1) {
+            val = get(mat, mat_row, mat_col);
+            set(result, mat_col, mat_row, val); 
+        }
+    }
+    return 0; 
 }
 
