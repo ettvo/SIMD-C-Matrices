@@ -200,11 +200,14 @@ int allocate_matrix_ref(matrix **mat, matrix *from, int offset, int rows, int co
  */
 void fill_matrix(matrix *mat, double val) {
     // Task 1.5 TODO
+    /* non-optimized 
     for (int curr_row = 0; curr_row < mat->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < mat->cols; curr_col += 1) {
             set(mat, curr_row, curr_col, val);
         }
     }
+    */
+
 }
 
 /*
@@ -215,12 +218,14 @@ void fill_matrix(matrix *mat, double val) {
 int abs_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
     double curr_val = -999;
+    /* non-optimized 
     for (int curr_row = 0; curr_row < mat->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < mat->cols; curr_col += 1) {
             curr_val = fabs(get(mat, curr_row, curr_col));
             set(result, curr_row, curr_col, curr_val);
         }
     }
+    */
     return 0;
 }
 
@@ -233,12 +238,14 @@ int abs_matrix(matrix *result, matrix *mat) {
 int neg_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
     double curr_val = -999;
+    /* non-optimized 
     for (int curr_row = 0; curr_row < mat->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < mat->cols; curr_col += 1) {
             curr_val = get(mat, curr_row, curr_col) * -1;
             set(result, curr_row, curr_col, curr_val);
         }
     }
+    */
     return 0;
 }
 
@@ -252,6 +259,7 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
     double curr_mat1 = -999; 
     double curr_mat2 = -999;
+    /* non-optimized 
     for (int curr_row = 0; curr_row < result->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
             curr_mat1 = get(mat1, curr_row, curr_col);
@@ -259,6 +267,7 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             set(result, curr_row, curr_col, curr_mat1 + curr_mat2);
         }
     }
+    */
     return 0;
 }
 
@@ -273,6 +282,7 @@ int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
     double curr_mat1 = -999; 
     double curr_mat2 = -999;
+    /* non-optimized 
     for (int curr_row = 0; curr_row < result->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
             curr_mat1 = get(mat1, curr_row, curr_col);
@@ -280,6 +290,7 @@ int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             set(result, curr_row, curr_col, curr_mat1 - curr_mat2);
         }
     }
+    */
     return 0;
 }
 
@@ -309,6 +320,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     allocate_matrix(&temp, result->rows, result->cols);
     fill_matrix(temp, 0);
 
+    /* non-optimized 
     for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
         // get total
@@ -329,6 +341,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             set(result, curr_row, curr_col, curr_val);
         }
     }
+    */
 
     deallocate_matrix(temp);
 
