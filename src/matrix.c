@@ -215,7 +215,7 @@ void fill_matrix(matrix *mat, double val) {
    int counter_tail = (mat->rows * mat->cols) % 4;
    
    while (counter_4 < mat->rows * mat->cols) {
-       __m256i 
+       //__m256i 
    }
 
 
@@ -426,8 +426,9 @@ int transpose_matrix(matrix *result, matrix *mat) {
    entries left and zeroes in the remaining spaces. 
    Assumes row and col are valid coordinates for an entry in mat. */
 double* get_simd4(matrix* mat, int row, int col) {
-    int total_entries = mat->rows * mat->cols;
-    if (total_entries - 4 > row * col) { // at least 4 entries left
+    int total_entries = (mat->rows + 1) * (mat->cols + 1);
+    // if it doesn't work due to incorrect if-else, just add 1 
+    if (total_entries - 4 > (row + 1) * (col+ 1)) { // at least 4 entries left
         int start_index = mat->cols * row + col;
         double result[4] = {mat->data[start_index], mat->data[start_index + 1], mat->data[start_index + 2], mat->data[start_index + 3]};
         double* ptr = (double*)malloc(sizeof(double*));
