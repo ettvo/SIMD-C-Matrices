@@ -12,7 +12,11 @@
 #include <x86intrin.h>
 #endif
 
-// TODO: current issue is with matmul --> pow + double free
+// TODO: start task 2
+// program uses 256-bit instructions = 4 doubles
+// work on 4 doubles at a time BUT need tail cases for 
+// situations w/o 4 values at a time
+
 
 /* Below are some intel intrinsics that might be useful
  * void _mm256_storeu_pd (double * mem_addr, __m256d a)
@@ -207,6 +211,13 @@ void fill_matrix(matrix *mat, double val) {
         }
     }
     */
+   int counter_4 = (mat->rows * mat->cols)/4;
+   int counter_tail = (mat->rows * mat->cols) % 4;
+   
+   while (counter_4 < mat->rows * mat->cols) {
+       __m256i 
+   }
+
 
 }
 
@@ -388,6 +399,10 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
     return 0;
 }
 
+/*** 
+ * HELPER FUNCTIONS 
+ ***/
+
 /* 
 Transposes a given MAT and stores it in RESULT.
 */ 
@@ -403,5 +418,30 @@ int transpose_matrix(matrix *result, matrix *mat) {
         }
     }
     return 0; 
+}
+
+/* Returns an array of 4 entries from the given matrix 
+   starting at the given coordinates. If there are less than
+   4 entries left, get_simd4 returns a matrix with the remaining
+   entries left and zeroes in the remaining spaces. 
+   Assumes row and col are valid coordinates for an entry in mat. */
+double* get_simd4(matrix* mat, int row, int col) {
+    int total_entries = mat->rows * mat->cols;
+    if (total_entries - 4 > row * col) { // at least 4 entries left
+        int start_index = mat->cols * row + col;
+        double result[4] = {mat->data[start_index], mat->data[start_index + 1], mat->data[start_index + 2], mat->data[start_index + 3]};
+        double* ptr = (double*)malloc(sizeof(double*));
+        ptr = &result;
+        return ptr;
+    } else { // less than 4 entrries left
+        double result[4] = {0, 0, 0, 0};
+        int start_index = mat->cols * row + col;
+        for (int counter = 0; counter < total_entries - row * col; counter += 1) {
+            result[counter] = mat->data[start_index + counter];
+        }
+        double* ptr = (double*)malloc(sizeof(double*));
+        ptr = &result;
+        return ptr;
+    }
 }
 
