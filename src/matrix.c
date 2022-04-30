@@ -213,9 +213,11 @@ void fill_matrix(matrix *mat, double val) {
     */
    int counter_4 = (mat->rows * mat->cols)/4;
    int counter_tail = (mat->rows * mat->cols) % 4;
+   double* ptr = (double*)malloc(sizeof(double*));
+
    
-   while (counter_4 < mat->rows * mat->cols) {
-       //__m256i 
+   for (int counter = 0; counter < counter_4; counter += 1) {
+
    }
 
 
@@ -425,7 +427,7 @@ int transpose_matrix(matrix *result, matrix *mat) {
    4 entries left, get_simd4 returns a matrix with the remaining
    entries left and zeroes in the remaining spaces. 
    Assumes row and col are valid coordinates for an entry in mat. */
-double* get_simd4(matrix* mat, int row, int col) {
+double* get_simd4_ptr(matrix* mat, int row, int col) {
     int total_entries = (mat->rows + 1) * (mat->cols + 1);
     // if it doesn't work due to incorrect if-else, just add 1 
     if (total_entries - 4 > (row + 1) * (col+ 1)) { // at least 4 entries left
@@ -446,3 +448,24 @@ double* get_simd4(matrix* mat, int row, int col) {
     }
 }
 
+/* Stores a pointer to an array of 4 entries from the given matrix 
+   starting at the given coordinates to DEST. If there are less than
+   4 entries left, get_simd4 stores a pointer to a matrix with the remaining
+   entries left and zeroes in the remaining spaces to DEST. 
+   Assumes row and col are valid coordinates for an entry in mat. */
+void store_simd4_ptr(double* dest, matrix* mat, int row, int col) {
+    int total_entries = (mat->rows + 1) * (mat->cols + 1);
+    // if it doesn't work due to incorrect if-else, just add 1 
+    if (total_entries - 4 > (row + 1) * (col+ 1)) { // at least 4 entries left
+        int start_index = mat->cols * row + col;
+        double result[4] = {mat->data[start_index], mat->data[start_index + 1], mat->data[start_index + 2], mat->data[start_index + 3]};
+        dest = &result;
+    } else { // less than 4 entrries left
+        double result[4] = {0, 0, 0, 0};
+        int start_index = mat->cols * row + col;
+        for (int counter = 0; counter < total_entries - row * col; counter += 1) {
+            result[counter] = mat->data[start_index + counter];
+        }
+        dest = &result;
+    }
+}

@@ -23,3 +23,5 @@ int pow_matrix(matrix *result, matrix *mat, int pow);
 int neg_matrix(matrix *result, matrix *mat);
 int abs_matrix(matrix *result, matrix *mat);
 int transpose_matrix(matrix *result, matrix *mat);
+double* get_simd4_ptr(matrix* mat, int row, int col);
+void store_simd4_ptr(double* dest, matrix* mat, int row, int col);
