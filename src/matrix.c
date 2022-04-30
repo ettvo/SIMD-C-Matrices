@@ -445,6 +445,17 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     allocate_matrix(&temp, result->rows, result->cols);
     fill_matrix(temp, 0);
 
+    matrix *transpose1 = NULL;
+    allocate_matrix(&transpose1, mat1->rows, mat1->cols);
+    transpose_matrix(transpose1, mat1);
+
+    matrix *transpose2 = NULL;
+    allocate_matrix(&transpose2, mat2->rows, mat2->cols);
+    transpose_matrix(transpose2, mat2);
+
+    // use fmadd w/ mat1 = a, mat2 = b, temp = c --> multiply and add to c
+    // multiply row of mat1 * col of mat2 --> dont need to transpose mat1?
+
     /* non-optimized 
     for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
