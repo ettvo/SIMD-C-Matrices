@@ -274,6 +274,132 @@ void pow_test(void) {
   deallocate_matrix(mat);
 }
 
+void transpose_test(void) {
+  matrix *mat1 = NULL; // small, different dimensions
+  
+  CU_ASSERT_EQUAL(allocate_matrix(&mat1, 1, 3), 0);
+
+  set(mat1, 0, 0, 1);
+  set(mat1, 0, 1, 2);
+  set(mat1, 0, 2, 3);
+  
+  matrix *temp_result = NULL;
+  allocate_matrix(&temp_result, mat1->cols, mat1->rows);
+  fill_matrix(temp_result, 0);
+  transpose_matrix(temp_result, mat1);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 0), 1);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 0), 2);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 0), 3);
+
+  deallocate_matrix(temp_result);
+  deallocate_matrix(mat1);
+
+
+  matrix *mat2 = NULL; // medium, different dimensions
+
+  CU_ASSERT_EQUAL(allocate_matrix(&mat2, 3, 5), 0);
+  
+  set(mat2, 0, 0, 1);
+  set(mat2, 0, 1, 2);
+  set(mat2, 0, 2, 3);
+  set(mat2, 0, 3, 4);
+  set(mat2, 0, 4, 5);
+
+  set(mat2, 1, 0, 6);
+  set(mat2, 1, 1, 7);
+  set(mat2, 1, 2, 8);
+  set(mat2, 1, 3, 9);
+  set(mat2, 1, 4, 10);
+
+  set(mat2, 2, 0, 11);
+  set(mat2, 2, 1, 12);
+  set(mat2, 2, 2, 13);
+  set(mat2, 2, 3, 14);
+  set(mat2, 2, 4, 15);
+
+  temp_result = NULL;
+
+  allocate_matrix(&temp_result, mat2->cols, mat2->rows);
+  fill_matrix(temp_result, 0);
+  transpose_matrix(temp_result, mat2);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 0), 1);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 0), 2);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 0), 3);
+  CU_ASSERT_EQUAL(get(temp_result, 3, 0), 4);
+  CU_ASSERT_EQUAL(get(temp_result, 4, 0), 5);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 1), 6);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 1), 7);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 1), 8);
+  CU_ASSERT_EQUAL(get(temp_result, 3, 1), 9);
+  CU_ASSERT_EQUAL(get(temp_result, 4, 1), 10);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 2), 11);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 2), 12);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 2), 13);
+  CU_ASSERT_EQUAL(get(temp_result, 3, 2), 14);
+  CU_ASSERT_EQUAL(get(temp_result, 4, 2), 15);
+  
+  deallocate_matrix(temp_result);
+  deallocate_matrix(mat2);
+
+  
+  matrix *mat3 = NULL; // same dimensions
+  CU_ASSERT_EQUAL(allocate_matrix(&mat3, 4, 4), 0);
+
+  set(mat3, 0, 0, 1);
+  set(mat3, 0, 1, 2);
+  set(mat3, 0, 2, 3);
+  set(mat3, 0, 3, 4);
+
+  set(mat3, 1, 0, 5);
+  set(mat3, 1, 1, 6);
+  set(mat3, 1, 2, 7);
+  set(mat3, 1, 3, 8);
+
+  set(mat3, 2, 0, 9);
+  set(mat3, 2, 1, 10);
+  set(mat3, 2, 2, 11);
+  set(mat3, 2, 3, 12);
+  
+  set(mat3, 3, 0, 13);
+  set(mat3, 3, 1, 14);
+  set(mat3, 3, 2, 15);
+  set(mat3, 3, 3, 16);
+
+  temp_result = NULL;
+
+  allocate_matrix(&temp_result, mat3->cols, mat3->rows);
+  fill_matrix(temp_result, 0);
+  transpose_matrix(temp_result, mat3);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 0), 1);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 0), 2);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 0), 3);
+  CU_ASSERT_EQUAL(get(temp_result, 3, 0), 4);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 1), 5);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 1), 6);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 1), 7);
+  CU_ASSERT_EQUAL(get(temp_result, 3, 1), 8);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 2), 9);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 2), 10);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 2), 11);
+  CU_ASSERT_EQUAL(get(temp_result, 3, 2), 12);
+
+  CU_ASSERT_EQUAL(get(temp_result, 0, 3), 13);
+  CU_ASSERT_EQUAL(get(temp_result, 1, 3), 14);
+  CU_ASSERT_EQUAL(get(temp_result, 2, 3), 15);
+  CU_ASSERT_EQUAL(get(temp_result, 3, 3), 16);
+  
+  deallocate_matrix(temp_result);
+  deallocate_matrix(mat3);
+
+}
+
 void mul_comp_test1(void) {
   matrix *result = NULL;
   matrix *mat1 = NULL;
@@ -438,7 +564,8 @@ int main (void)
         (CU_add_test(pSuite, "dealloc_null_test", dealloc_null_test) == NULL) ||
         (CU_add_test(pSuite, "get_test", get_test) == NULL) ||
         (CU_add_test(pSuite, "set_test", set_test) == NULL) ||
-        (CU_add_test(pSuite, "mul_long_test1", set_test) == NULL)
+        (CU_add_test(pSuite, "mul_comp_test1", mul_comp_test1) == NULL) ||
+        (CU_add_test(pSuite, "transpose_test", transpose_test) == NULL)
      )
    {
       CU_cleanup_registry();

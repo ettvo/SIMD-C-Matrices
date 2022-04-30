@@ -431,7 +431,6 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // matrix multiplication --> mat1 col == mat2 row
     // new output = mat1 row x mat2 col
     // each entry in result = row of mat 1 * col of mat 2
-    double total = 0;
     if (mat1->cols != mat2->rows) {
         printf("Mul dimension error");
         return -1;
@@ -441,18 +440,63 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     result->cols = mat2->cols;
     result->data = (double*)realloc(result->data, result->rows * result->cols * sizeof(double));
     
-    matrix *temp = NULL;
-    allocate_matrix(&temp, result->rows, result->cols);
-    fill_matrix(temp, 0);
+    matrix *temp_result = NULL;
+    allocate_matrix(&temp_result, result->rows, result->cols);
+    fill_matrix(temp_result, 0);
 
-    matrix *transpose1 = NULL;
-    allocate_matrix(&transpose1, mat1->rows, mat1->cols);
-    transpose_matrix(transpose1, mat1);
+    //matrix *transpose1 = NULL;
+    //allocate_matrix(&transpose1, mat1->rows, mat1->cols);
+    //transpose_matrix(transpose1, mat1);
 
     matrix *transpose2 = NULL;
     allocate_matrix(&transpose2, mat2->rows, mat2->cols);
     transpose_matrix(transpose2, mat2);
 
+    // matrix multiplication --> mat1 col == mat2 row
+    // new output = mat1 row x mat2 col
+    // each entry in result = row of mat 1 * col of mat 2
+    // iterate over entries of result --> sum w/ mat1->cols == mat2->rows
+    //
+    int counter_4 = (result->rows * mat1->cols)/4;
+    int counter_tail = (result->rows * mat1->cols) % 4;
+    //double* ptr = (double*)malloc(sizeof(double*));
+    // total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col); // issue is with non-square dimensions
+    __m256d mat1_load;
+    __m256d mat2_load;
+    __m256d temp_total;
+    double total;
+    double multiplied[4];
+
+    // load result 4 items at a time or 1 item at a time w/ 4 operations?
+
+    // approach 2: 1 item at a time w/ 4 operations
+    for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
+        for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
+        // get total
+            total = 0;
+            for (int counter = 0; counter < counter_4; counter += 1) {
+                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
+                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter));
+                temp_total = _mm256_mul_pd(mat1_load, mat2_load);
+                _mm256_storeu_pd(multiplied, temp_total);
+                total += multiplied[0] + multiplied[1] + multiplied[2] + multiplied[3]; // issue is with non-square dimensions
+                // need to check that the given item has the given row or counter
+            }
+            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4));
+            mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4));
+            temp_total = _mm256_mul_pd(mat1_load, mat2_load);
+            _mm256_storeu_pd(multiplied, temp_total);
+            for (int counter = 0; counter < counter_tail; counter += 1) {
+                total += multiplied[counter];
+            }
+            // mat1 rows, mat2 cols, and mat1 cols == mat2 rows number sums per entry
+            // for loop to sum over entries
+            set(result, curr_row, curr_col, total);
+        }
+    }
+
+    deallocate_matrix(temp_result);
+    deallocate_matrix(transpose2);
     // use fmadd w/ mat1 = a, mat2 = b, temp = c --> multiply and add to c
     // multiply row of mat1 * col of mat2 --> dont need to transpose mat1?
 
@@ -479,7 +523,6 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     }
     */
 
-    deallocate_matrix(temp);
 
     return 0;
 }
@@ -531,6 +574,7 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
 /* 
 Transposes a given MAT and stores it in RESULT.
 */ 
+// can probably SIMD optimize this one
 int transpose_matrix(matrix *result, matrix *mat) {
     if (result->cols != mat->rows || result->rows != mat->cols) {
         return -1;
