@@ -16,6 +16,7 @@
 // program uses 256-bit instructions = 4 doubles
 // work on 4 doubles at a time BUT need tail cases for 
 // situations w/o 4 values at a time
+// can go with the approach in store_simd4 ptr or use pointer arithmetic
 
 
 /* Below are some intel intrinsics that might be useful
@@ -211,16 +212,24 @@ void fill_matrix(matrix *mat, double val) {
         }
     }
     */
-   int counter_4 = (mat->rows * mat->cols)/4;
-   int counter_tail = (mat->rows * mat->cols) % 4;
-   double* ptr = (double*)malloc(sizeof(double*));
+    int counter_4 = (mat->rows * mat->cols)/4;
+    int counter_tail = (mat->rows * mat->cols) % 4;
+    //double* ptr = (double*)malloc(sizeof(double*));
+    double fill[4] = {val, val, val, val};
+    __m256d temp = _mm256_loadu_pd(fill);
+    for (int counter = 0; counter < counter_4; counter += 1) {
+        // temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
+        _mm256_storeu_pd((mat->data + 4 * counter), temp);
+    }
 
-   
-   for (int counter = 0; counter < counter_4; counter += 1) {
+    double tail_arr[4];
+    _mm256_storeu_pd(tail_arr, temp);
 
-   }
+    for (int counter = 0; counter < counter_tail; counter += 1) {
+        mat->data[counter_4 * 4 + counter] = tail_arr[counter];
+    }
 
-
+    //free(ptr);
 }
 
 /*
@@ -230,8 +239,8 @@ void fill_matrix(matrix *mat, double val) {
  */
 int abs_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
-    double curr_val = -999;
     /* non-optimized 
+    double curr_val = -999;
     for (int curr_row = 0; curr_row < mat->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < mat->cols; curr_col += 1) {
             curr_val = fabs(get(mat, curr_row, curr_col));
@@ -239,6 +248,38 @@ int abs_matrix(matrix *result, matrix *mat) {
         }
     }
     */
+    int counter_4 = (mat->rows * mat->cols)/4;
+    int counter_tail = (mat->rows * mat->cols) % 4;
+    //double* ptr = (double*)malloc(sizeof(double*));
+    __m256d temp;
+    double neg[4] = {-1, -1, -1, -1};
+    __m256d negator = _mm256_loadu_pd(neg);
+    __m256d negated_arr;
+    // floating point representation = has a sign bit
+    for (int counter = 0; counter < counter_4; counter += 1) {
+        //temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
+        temp = _mm256_loadu_pd((mat->data + 4 * counter));
+        negated_arr = _mm256_mul_pd(negator, temp);
+        temp = _mm256_max_pd(negated_arr, temp);
+        _mm256_storeu_pd((result->data + 4 * counter), temp);
+    }
+
+    temp = _mm256_loadu_pd((mat->data + 4 * counter_4));
+    negated_arr = _mm256_mul_pd(negator, temp);
+    temp = _mm256_max_pd(negated_arr, temp);
+    double tail_arr[4];
+    _mm256_storeu_pd(tail_arr, temp);
+    for (int counter = 0; counter < counter_tail; counter += 1) {
+        result->data[counter_4 * 4 + counter] = tail_arr[counter];
+    }
+
+    //for (int counter = 0; counter < counter_tail; counter += 1) {
+    //    if (mat->data[counter_4 * 4 + counter] > 0) {
+    //        result->data[counter_4 * 4 + counter] = mat->data[counter_4 * 4 + counter];
+    //    } else {
+    //        result->data[counter_4 * 4 + counter] = -mat->data[counter_4 * 4 + counter];
+    //    }
+    //}
     return 0;
 }
 
@@ -250,8 +291,8 @@ int abs_matrix(matrix *result, matrix *mat) {
  */
 int neg_matrix(matrix *result, matrix *mat) {
     // Task 1.5 TODO
-    double curr_val = -999;
     /* non-optimized 
+    double curr_val = -999;
     for (int curr_row = 0; curr_row < mat->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < mat->cols; curr_col += 1) {
             curr_val = get(mat, curr_row, curr_col) * -1;
@@ -259,6 +300,26 @@ int neg_matrix(matrix *result, matrix *mat) {
         }
     }
     */
+    int counter_4 = (mat->rows * mat->cols)/4;
+    int counter_tail = (mat->rows * mat->cols) % 4;
+    //double* ptr = (double*)malloc(sizeof(double*));
+    double neg[4] = {-1, -1, -1, -1};
+    __m256d temp;
+    __m256d negator = _mm256_loadu_pd(neg);
+    // floating point representation = has a sign bit
+    for (int counter = 0; counter < counter_4; counter += 1) {
+        temp = _mm256_loadu_pd((mat->data + 4 * counter));
+        temp = _mm256_mul_pd(negator, temp);
+        _mm256_storeu_pd((result->data + 4 * counter), temp);
+    }
+    
+    temp = _mm256_loadu_pd((mat->data + 4 * counter_4));
+    temp = _mm256_mul_pd(negator, temp);
+    double tail_arr[4];
+    _mm256_storeu_pd(tail_arr, temp);
+    for (int counter = 0; counter < counter_tail; counter += 1) {
+        result->data[counter_4 * 4 + counter] = tail_arr[counter];
+    }
     return 0;
 }
 
@@ -270,9 +331,9 @@ int neg_matrix(matrix *result, matrix *mat) {
  */
 int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
+    /* non-optimized
     double curr_mat1 = -999; 
-    double curr_mat2 = -999;
-    /* non-optimized 
+    double curr_mat2 = -999; 
     for (int curr_row = 0; curr_row < result->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
             curr_mat1 = get(mat1, curr_row, curr_col);
@@ -281,6 +342,29 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         }
     }
     */
+    int counter_4 = (result->rows * result->cols)/4;
+    int counter_tail = (result->rows * result->cols) % 4;
+    //double* ptr = (double*)malloc(sizeof(double*));
+    __m256d temp;
+    __m256d mat1_load;
+    // floating point representation = has a sign bit
+    for (int counter = 0; counter < counter_4; counter += 1) {
+        mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
+        temp = _mm256_loadu_pd((mat2->data + 4 * counter));
+        temp = _mm256_add_pd(temp, mat1_load);
+        _mm256_storeu_pd((result->data + 4 * counter), temp);
+    }
+    mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4));
+    temp = _mm256_loadu_pd((mat2->data + 4 * counter_4));
+    temp = _mm256_add_pd(temp, mat1_load);
+    double tail_arr[4];
+    _mm256_storeu_pd(tail_arr, temp);
+    //for (int counter = 0; counter < counter_tail; counter += 1) {
+    //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] + mat2->data[counter_4 * 4 + counter];
+    //}
+    for (int counter = 0; counter < counter_tail; counter += 1) {
+        result->data[counter_4 * 4 + counter] = tail_arr[counter];
+    }
     return 0;
 }
 
@@ -293,9 +377,9 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
  */
 int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     // Task 1.5 TODO
+    /* non-optimized 
     double curr_mat1 = -999; 
     double curr_mat2 = -999;
-    /* non-optimized 
     for (int curr_row = 0; curr_row < result->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
             curr_mat1 = get(mat1, curr_row, curr_col);
@@ -304,6 +388,34 @@ int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         }
     }
     */
+    int counter_4 = (result->rows * result->cols)/4;
+    int counter_tail = (result->rows * result->cols) % 4;
+    //double* ptr = (double*)malloc(sizeof(double*));
+    __m256d temp;
+    __m256d mat1_load;
+    // floating point representation = has a sign bit
+    for (int counter = 0; counter < counter_4; counter += 1) {
+        mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
+        temp = _mm256_loadu_pd((mat2->data + 4 * counter));
+        temp = _mm256_sub_pd(mat1_load, temp);
+        _mm256_storeu_pd((result->data + 4 * counter), temp);
+    }
+
+    mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4));
+    temp = _mm256_loadu_pd((mat2->data + 4 * counter_4));
+    temp = _mm256_sub_pd(mat1_load, temp);
+    double tail_arr[4];
+    _mm256_storeu_pd(tail_arr, temp);
+    //for (int counter = 0; counter < counter_tail; counter += 1) {
+    //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] + mat2->data[counter_4 * 4 + counter];
+    //}
+    for (int counter = 0; counter < counter_tail; counter += 1) {
+        result->data[counter_4 * 4 + counter] = tail_arr[counter];
+    }
+
+    //for (int counter = 0; counter < counter_tail; counter += 1) {
+    //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] - mat2->data[counter_4 * 4 + counter];
+    //}
     return 0;
 }
 
@@ -434,7 +546,7 @@ double* get_simd4_ptr(matrix* mat, int row, int col) {
         int start_index = mat->cols * row + col;
         double result[4] = {mat->data[start_index], mat->data[start_index + 1], mat->data[start_index + 2], mat->data[start_index + 3]};
         double* ptr = (double*)malloc(sizeof(double*));
-        ptr = &result;
+        ptr = result;
         return ptr;
     } else { // less than 4 entrries left
         double result[4] = {0, 0, 0, 0};
@@ -443,7 +555,7 @@ double* get_simd4_ptr(matrix* mat, int row, int col) {
             result[counter] = mat->data[start_index + counter];
         }
         double* ptr = (double*)malloc(sizeof(double*));
-        ptr = &result;
+        ptr = result;
         return ptr;
     }
 }
@@ -456,16 +568,16 @@ double* get_simd4_ptr(matrix* mat, int row, int col) {
 void store_simd4_ptr(double* dest, matrix* mat, int row, int col) {
     int total_entries = (mat->rows + 1) * (mat->cols + 1);
     // if it doesn't work due to incorrect if-else, just add 1 
-    if (total_entries - 4 > (row + 1) * (col+ 1)) { // at least 4 entries left
+    if (total_entries - 4 > (row + 1) * (col + 1)) { // at least 4 entries left
         int start_index = mat->cols * row + col;
         double result[4] = {mat->data[start_index], mat->data[start_index + 1], mat->data[start_index + 2], mat->data[start_index + 3]};
-        dest = &result;
+        dest = result;
     } else { // less than 4 entrries left
         double result[4] = {0, 0, 0, 0};
         int start_index = mat->cols * row + col;
         for (int counter = 0; counter < total_entries - row * col; counter += 1) {
             result[counter] = mat->data[start_index + counter];
         }
-        dest = &result;
+        dest = result;
     }
 }
