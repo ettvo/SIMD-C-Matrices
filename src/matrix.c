@@ -606,11 +606,21 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
     } else {
         mul_matrix(result, mat, mat);
         int counter = pow - 1;
+
+        matrix *temp = NULL;
+        allocate_matrix(&temp, mat->rows, mat->cols);
+        mul_matrix(temp, mat, mat);
+
+        while (counter > 2) {
+            mul_matrix(result, result, temp);
+            counter -= 2;
+        }
         
         while (counter > 1) {
             mul_matrix(result, mat, result);
             counter -= 1;
         }
+        deallocate_matrix(temp);
     }
     return 0;
 }

@@ -277,6 +277,7 @@ void pow_test(void) {
   deallocate_matrix(mat);
 }
 
+
 void transpose_test(void) {
   matrix *mat1 = NULL; // small, different dimensions
   
