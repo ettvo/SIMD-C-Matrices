@@ -212,23 +212,48 @@ void fill_matrix(matrix *mat, double val) {
         }
     }
     */
-    int counter_4 = (mat->rows * mat->cols)/4;
-    int counter_tail = (mat->rows * mat->cols) % 4;
+    //int counter_4 = (mat->rows * mat->cols)/4;
+    //int counter_tail = (mat->rows * mat->cols) % 4;
     //double* ptr = (double*)malloc(sizeof(double*));
-    double fill[4] = {val, val, val, val};
-    __m256d temp = _mm256_loadu_pd(fill);
-    for (int counter = 0; counter < counter_4; counter += 1) {
-        // temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
-        _mm256_storeu_pd((mat->data + 4 * counter), temp);
+
+    /* Took time 0.1 sec
+    #pragma omp parallel 
+    {   
+        double fill[4] = {val, val, val, val};
+        __m256d temp = _mm256_loadu_pd(fill);
+        for (int counter = 0; counter < ((mat->rows * mat->cols)/4); counter += 1) {
+            // temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
+            _mm256_storeu_pd((mat->data + 4 * counter), temp);
+        }
     }
 
-    double tail_arr[4];
-    _mm256_storeu_pd(tail_arr, temp);
-
-    for (int counter = 0; counter < counter_tail; counter += 1) {
-        mat->data[counter_4 * 4 + counter] = tail_arr[counter];
+    #pragma omp parallel 
+    {
+        double fill[4] = {val, val, val, val};
+        __m256d temp = _mm256_loadu_pd(fill);
+        double tail_arr[4];
+        _mm256_storeu_pd(tail_arr, temp);
+        for (int counter = 0; counter < ((mat->rows * mat->cols) % 4); counter += 1) {
+            mat->data[((mat->rows * mat->cols)/4) * 4 + counter] = tail_arr[counter];
+        }
     }
+    */
 
+   // Took time 0.06 sec
+   #pragma omp parallel 
+    {   
+        double fill[4] = {val, val, val, val};
+        __m256d temp = _mm256_loadu_pd(fill);
+        for (int counter = 0; counter < ((mat->rows * mat->cols)/4); counter += 1) {
+            // temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
+            _mm256_storeu_pd((mat->data + 4 * counter), temp);
+        }
+        double tail_arr[4];
+        _mm256_storeu_pd(tail_arr, temp);
+        for (int counter = 0; counter < ((mat->rows * mat->cols) % 4); counter += 1) {
+            mat->data[((mat->rows * mat->cols)/4) * 4 + counter] = tail_arr[counter];
+        }
+    }
     //free(ptr);
 }
 
@@ -248,29 +273,34 @@ int abs_matrix(matrix *result, matrix *mat) {
         }
     }
     */
-    int counter_4 = (mat->rows * mat->cols)/4;
-    int counter_tail = (mat->rows * mat->cols) % 4;
-    //double* ptr = (double*)malloc(sizeof(double*));
-    __m256d temp;
-    double neg[4] = {-1, -1, -1, -1};
-    __m256d negator = _mm256_loadu_pd(neg);
-    __m256d negated_arr;
-    // floating point representation = has a sign bit
-    for (int counter = 0; counter < counter_4; counter += 1) {
-        //temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
-        temp = _mm256_loadu_pd((mat->data + 4 * counter));
+
+    // took 0.08 sec
+    #pragma omp parallel
+    {
+        int counter_4 = (mat->rows * mat->cols)/4;
+        int counter_tail = (mat->rows * mat->cols) % 4;
+        //double* ptr = (double*)malloc(sizeof(double*));
+        __m256d temp;
+        double neg[4] = {-1, -1, -1, -1};
+        __m256d negator = _mm256_loadu_pd(neg);
+        __m256d negated_arr;
+        // floating point representation = has a sign bit
+        for (int counter = 0; counter < counter_4; counter += 1) {
+            //temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
+            temp = _mm256_loadu_pd((mat->data + 4 * counter));
+            negated_arr = _mm256_mul_pd(negator, temp);
+            temp = _mm256_max_pd(negated_arr, temp);
+            _mm256_storeu_pd((result->data + 4 * counter), temp);
+        }
+
+        temp = _mm256_loadu_pd((mat->data + 4 * counter_4));
         negated_arr = _mm256_mul_pd(negator, temp);
         temp = _mm256_max_pd(negated_arr, temp);
-        _mm256_storeu_pd((result->data + 4 * counter), temp);
-    }
-
-    temp = _mm256_loadu_pd((mat->data + 4 * counter_4));
-    negated_arr = _mm256_mul_pd(negator, temp);
-    temp = _mm256_max_pd(negated_arr, temp);
-    double tail_arr[4];
-    _mm256_storeu_pd(tail_arr, temp);
-    for (int counter = 0; counter < counter_tail; counter += 1) {
-        result->data[counter_4 * 4 + counter] = tail_arr[counter];
+        double tail_arr[4];
+        _mm256_storeu_pd(tail_arr, temp);
+        for (int counter = 0; counter < counter_tail; counter += 1) {
+            result->data[counter_4 * 4 + counter] = tail_arr[counter];
+        }
     }
 
     //for (int counter = 0; counter < counter_tail; counter += 1) {
@@ -344,26 +374,32 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     */
     int counter_4 = (result->rows * result->cols)/4;
     int counter_tail = (result->rows * result->cols) % 4;
-    //double* ptr = (double*)malloc(sizeof(double*));
     __m256d temp;
     __m256d mat1_load;
-    // floating point representation = has a sign bit
-    for (int counter = 0; counter < counter_4; counter += 1) {
-        mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
-        temp = _mm256_loadu_pd((mat2->data + 4 * counter));
-        temp = _mm256_add_pd(temp, mat1_load);
-        _mm256_storeu_pd((result->data + 4 * counter), temp);
+    #pragma omp parallel 
+    {
+        //double* ptr = (double*)malloc(sizeof(double*));
+        // floating point representation = has a sign bit
+        for (int counter = 0; counter < counter_4; counter += 1) {
+            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
+            temp = _mm256_loadu_pd((mat2->data + 4 * counter));
+            temp = _mm256_add_pd(temp, mat1_load);
+            _mm256_storeu_pd((result->data + 4 * counter), temp);
+        }
+        //for (int counter = 0; counter < counter_tail; counter += 1) {
+        //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] + mat2->data[counter_4 * 4 + counter];
+        //}
     }
     mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4));
     temp = _mm256_loadu_pd((mat2->data + 4 * counter_4));
     temp = _mm256_add_pd(temp, mat1_load);
     double tail_arr[4];
     _mm256_storeu_pd(tail_arr, temp);
-    //for (int counter = 0; counter < counter_tail; counter += 1) {
-    //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] + mat2->data[counter_4 * 4 + counter];
-    //}
-    for (int counter = 0; counter < counter_tail; counter += 1) {
-        result->data[counter_4 * 4 + counter] = tail_arr[counter];
+    #pragma omp parallel 
+    {
+        for (int counter = 0; counter < counter_tail; counter += 1) {
+            result->data[counter_4 * 4 + counter] = tail_arr[counter];
+        }
     }
     return 0;
 }
@@ -436,22 +472,6 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         return -1;
     }
 
-    //result->rows = mat1->rows;
-    //result->cols = mat2->cols;
-    //result->data = (double*)realloc(result->data, result->rows * result->cols * sizeof(double));
-
-
-    // matrix multiplication --> mat1 col == mat2 row
-    // new output = mat1 row x mat2 col
-    // each entry in result = row of mat 1 * col of mat 2
-    // iterate over entries of result --> sum w/ mat1->cols == mat2->rows
-
-    //double* ptr = (double*)malloc(sizeof(double*));
-    // total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col); // issue is with non-square dimensions
-    
-    
-    
-    ///*
     __m256d mat1_load;
     __m256d mat2_load;
     __m256d temp_total;
@@ -459,76 +479,38 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     double multiplied[4];
     matrix *temp_result = NULL;
     allocate_matrix(&temp_result, result->rows, result->cols);
-    //fill_matrix(temp_result, 0);
 
     matrix *transpose2 = NULL;
     allocate_matrix(&transpose2, mat2->cols, mat2->rows);
     transpose_matrix(transpose2, mat2);
 
-    // load result 4 items at a time or 1 item at a time w/ 4 operations?
-
-    // approach 2: 1 item at a time w/ 4 operations
     int counter_4 = (mat1->cols)/4;
     int counter_tail = (mat1->cols) % 4;
     
-    //printf("\ntotal operations (mat1 cols): %d, counter_4: %d, counter_tail: %d\n", mat1->cols, counter_4, counter_tail);
-    //printf("dimensions mat1: %d rows, %d cols; dim mat2: %d rows, %d cols\n", mat1->rows, mat1->cols, mat2->rows, mat2->cols);
-    for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
-        for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
-            // columns of transpose2 == columns of mat1 (adjacent due to row-major order)
+    for(int curr_row = 0; curr_row < result->rows; curr_row += 1) {
+        for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
             total = 0;
-
-            // need to get current row of mat1, current col of mat2
-            // --> need curr row of mat1, 
-            //  curr row of transpose2 s.t. curr_row of transpose2 == curr_col
             for (int counter = 0; counter < counter_4; counter += 1) {
-                // need to change pointer arithmetic --> working on 2d matrices, not 1d vector
-                // = need to account for row 
-                // 4 * counter gets column
-                // 4 * curr_row * matrix_cols gets row
-                //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + 4 * curr_row * (mat1->cols + 1))); // subtract 1 from cols?
-                //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + 4 * curr_row * (transpose2->cols + 0)));
-                
-                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + curr_row * mat1->cols)); // subtract 1 from cols?
-                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + curr_col * transpose2->cols)); // either transpose2->rows or transpose2->cols
-                // curr col becomes row of transpose 2 --> need to multiply curr_col by # of cols of transpose2
+                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + curr_row * mat1->cols));
+                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + curr_col * transpose2->cols)); 
                 temp_total = _mm256_mul_pd(mat1_load, mat2_load);
                 _mm256_storeu_pd(multiplied, temp_total);
-                total += multiplied[0] + multiplied[1] + multiplied[2] + multiplied[3]; // issue is with non-square dimensions
-                // need to check that the given item has the given row or counter
+                total += multiplied[0] + multiplied[1] + multiplied[2] + multiplied[3];
             }
-            // currently sums ALL of entries, regardless of whether in same row 
-            // need to update tail & counter_4 to account for row length
-            //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + 4 * curr_row * (mat1->cols + 0)));
-            //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + 4 * curr_col * (transpose2->cols + 0)));
-            
-            //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols));
-            //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols));
-            
             mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + curr_row * mat1->cols));
             mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + curr_col * transpose2->cols));
             
             temp_total = _mm256_mul_pd(mat1_load, mat2_load);
             _mm256_storeu_pd(multiplied, temp_total);
             for (int counter = 0; counter < counter_tail; counter += 1) {
-                //printf("total before adding: %f, counter: %d, multiplied val: %f at row %d, col %d\n", total, counter, multiplied[counter], curr_row, curr_col);
                 total += multiplied[counter];
             }
-            // mat1 rows, mat2 cols, and mat1 cols == mat2 rows number sums per entry
-            // for loop to sum over entries
-            // not stored correctly since get & set use different metrics for storing
             set(result, curr_row, curr_col, total);
         }
     }
 
     deallocate_matrix(temp_result);
     deallocate_matrix(transpose2);
-    //*/
-
-
-
-    // use fmadd w/ mat1 = a, mat2 = b, temp = c --> multiply and add to c
-    // multiply row of mat1 * col of mat2 --> dont need to transpose mat1?
 
     /* non-optimized 
     double total = 0;
