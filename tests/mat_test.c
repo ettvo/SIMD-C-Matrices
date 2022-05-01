@@ -203,7 +203,10 @@ void mul_square_test(void) {
   }
   mul_matrix(result, mat1, mat2);
   CU_ASSERT_EQUAL(get(result, 0, 0), 30);
+  printf("Wanted %d at row %d, col %d, but got %f\n", 36, 0, 1, get(result, 0, 1));
   CU_ASSERT_EQUAL(get(result, 0, 1), 36);
+
+  printf("Wanted %d at row %d, col %d, but got %f\n", 42, 0, 2, get(result, 0, 2));
   CU_ASSERT_EQUAL(get(result, 0, 2), 42);
   CU_ASSERT_EQUAL(get(result, 1, 0), 66);
   CU_ASSERT_EQUAL(get(result, 1, 1), 81);
@@ -414,12 +417,13 @@ void mul_comp_test1(void) {
   set(mat1, 1, 0, 4);
   set(mat1, 1, 1, 9);
 
-  set(mat1, 0, 0, 6);
-  set(mat1, 0, 1, 2);
-  set(mat1, 1, 0, 5);
-  set(mat1, 1, 1, 8);
+  set(mat2, 0, 0, 6);
+  set(mat2, 0, 1, 2);
+  set(mat2, 1, 0, 5);
+  set(mat2, 1, 1, 8);
 
   mul_matrix(result, mat1, mat2);
+  printf("expected %d at row %d, col %d, but got %f\n", 53, 0, 0, get(result, 0, 0));
   CU_ASSERT_EQUAL(get(result, 0, 0), 53);
   CU_ASSERT_EQUAL(get(result, 0, 1), 62);
   CU_ASSERT_EQUAL(get(result, 1, 0), 69);
@@ -552,7 +556,6 @@ int main (void)
         /* (OPTIONAL) Uncomment the following lines if you have implemented sub_matrix and neg_matrix. */
         (CU_add_test(pSuite, "sub_test", sub_test) == NULL) ||
         (CU_add_test(pSuite, "neg_test", neg_test) == NULL) ||
-
         (CU_add_test(pSuite, "mul_square_test", mul_square_test) == NULL) ||
         (CU_add_test(pSuite, "mul_non_square_test", mul_non_square_test) == NULL) ||
         (CU_add_test(pSuite, "abs_test", abs_test) == NULL) ||
@@ -564,8 +567,8 @@ int main (void)
         (CU_add_test(pSuite, "dealloc_null_test", dealloc_null_test) == NULL) ||
         (CU_add_test(pSuite, "get_test", get_test) == NULL) ||
         (CU_add_test(pSuite, "set_test", set_test) == NULL) ||
-        (CU_add_test(pSuite, "mul_comp_test1", mul_comp_test1) == NULL) ||
-        (CU_add_test(pSuite, "transpose_test", transpose_test) == NULL)
+        (CU_add_test(pSuite, "transpose_test", transpose_test) == NULL) ||
+        (CU_add_test(pSuite, "mul_comp_test1", mul_comp_test1) == NULL)
      )
    {
       CU_cleanup_registry();

@@ -436,79 +436,127 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         return -1;
     }
 
-    result->rows = mat1->rows;
-    result->cols = mat2->cols;
-    result->data = (double*)realloc(result->data, result->rows * result->cols * sizeof(double));
-    
-    matrix *temp_result = NULL;
-    allocate_matrix(&temp_result, result->rows, result->cols);
-    fill_matrix(temp_result, 0);
+    //result->rows = mat1->rows;
+    //result->cols = mat2->cols;
+    //result->data = (double*)realloc(result->data, result->rows * result->cols * sizeof(double));
 
-    //matrix *transpose1 = NULL;
-    //allocate_matrix(&transpose1, mat1->rows, mat1->cols);
-    //transpose_matrix(transpose1, mat1);
-
-    matrix *transpose2 = NULL;
-    allocate_matrix(&transpose2, mat2->rows, mat2->cols);
-    transpose_matrix(transpose2, mat2);
 
     // matrix multiplication --> mat1 col == mat2 row
     // new output = mat1 row x mat2 col
     // each entry in result = row of mat 1 * col of mat 2
     // iterate over entries of result --> sum w/ mat1->cols == mat2->rows
-    //
-    int counter_4 = (result->rows * mat1->cols)/4;
-    int counter_tail = (result->rows * mat1->cols) % 4;
+
     //double* ptr = (double*)malloc(sizeof(double*));
     // total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col); // issue is with non-square dimensions
+    
+    
+    
+    /*
     __m256d mat1_load;
     __m256d mat2_load;
     __m256d temp_total;
     double total;
     double multiplied[4];
+    matrix *temp_result = NULL;
+    allocate_matrix(&temp_result, result->rows, result->cols);
+    //fill_matrix(temp_result, 0);
+
+    matrix *transpose2 = NULL;
+    allocate_matrix(&transpose2, mat2->cols, mat2->rows);
+    transpose_matrix(transpose2, mat2);
 
     // load result 4 items at a time or 1 item at a time w/ 4 operations?
 
     // approach 2: 1 item at a time w/ 4 operations
+    int counter_4 = (mat1->cols)/4;
+    int counter_tail = (mat1->cols) % 4;
+    
+    printf("\ntotal operations (mat1 cols): %d, counter_4: %d, counter_tail: %d\n", mat1->cols, counter_4, counter_tail);
+    printf("dimensions mat1: %d rows, %d cols; dim mat2: %d rows, %d cols\n", mat1->rows, mat1->cols, mat2->rows, mat2->cols);
     for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
-        // get total
+            // columns of transpose2 == columns of mat1 (adjacent due to row-major order)
             total = 0;
+
+            // need to get current row of mat1, current col of mat2
+            // --> need curr row of mat1, 
+            //  curr row of transpose2 s.t. curr_row of transpose2 == curr_col
             for (int counter = 0; counter < counter_4; counter += 1) {
-                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
-                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter));
+                // need to change pointer arithmetic --> working on 2d matrices, not 1d vector
+                // = need to account for row 
+                // 4 * counter gets column
+                // 4 * curr_row * matrix_cols gets row
+                //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + 4 * curr_row * (mat1->cols + 1))); // subtract 1 from cols?
+                //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + 4 * curr_row * (transpose2->cols + 0)));
+                
+                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + 4 * curr_row * mat1->cols))); // subtract 1 from cols?
+                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + 4 * curr_col * transpose2->cols)); // either transpose2->rows or transpose2->cols
+                // curr col becomes row of transpose 2 --> need to multiply curr_col by # of cols of transpose2
                 temp_total = _mm256_mul_pd(mat1_load, mat2_load);
                 _mm256_storeu_pd(multiplied, temp_total);
+                printf("from within counter_4: mult1: %f, mult2: %f, mult3: %f, mult4: %f\n", multiplied[0], multiplied[1], multiplied[2], multiplied[3]);
                 total += multiplied[0] + multiplied[1] + multiplied[2] + multiplied[3]; // issue is with non-square dimensions
                 // need to check that the given item has the given row or counter
             }
-            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4));
-            mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4));
+            // currently sums ALL of entries, regardless of whether in same row 
+            // need to update tail & counter_4 to account for row length
+            //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + 4 * curr_row * (mat1->cols + 0)));
+            //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + 4 * curr_col * (transpose2->cols + 0)));
+            
+            //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols));
+            //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols));
+            
+            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols));
+            mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols));
+            
+
+            printf("\ntotal operations (mat1 cols): %d, counter_4: %d, counter_tail: %d\n", mat1->cols, counter_4, counter_tail);
+
+            printf("mat1 start: %f\n", (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[0]);
+            printf("mat1 rest: %f, %f, %f\n", (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[1], (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[2], (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[3]);
+            
+            printf("mat2 start: %f\n", (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[0]);
+            printf("mat2 rest: %f, %f, %f\n", (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[1], (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[2], (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[3]);
+
             temp_total = _mm256_mul_pd(mat1_load, mat2_load);
             _mm256_storeu_pd(multiplied, temp_total);
             for (int counter = 0; counter < counter_tail; counter += 1) {
+                //printf("total before adding: %f, counter: %d, multiplied val: %f at row %d, col %d\n", total, counter, multiplied[counter], curr_row, curr_col);
                 total += multiplied[counter];
             }
             // mat1 rows, mat2 cols, and mat1 cols == mat2 rows number sums per entry
             // for loop to sum over entries
+            // not stored correctly since get & set use different metrics for storing
             set(result, curr_row, curr_col, total);
         }
     }
 
     deallocate_matrix(temp_result);
     deallocate_matrix(transpose2);
+    */
+
+
+
     // use fmadd w/ mat1 = a, mat2 = b, temp = c --> multiply and add to c
     // multiply row of mat1 * col of mat2 --> dont need to transpose mat1?
 
-    /* non-optimized 
+    ///* non-optimized 
+    double total = 0;
+
+    matrix *temp = NULL;
+    allocate_matrix(&temp, result->rows, result->cols);
+    //fill_matrix(temp, 0);
+
     for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
         // get total
             for (int counter = 0; counter < mat1->cols; counter += 1) {
+                //printf("mat1 val: %f for row %d and col %d, mat2 val: %f for row %d and col %d\n", get(mat1, curr_row, counter), curr_row, counter, get(mat2, counter, curr_col), counter, curr_col);
                 total += get(mat1, curr_row, counter) * get(mat2, counter, curr_col); // issue is with non-square dimensions
                 // need to check that the given item has the given row or counter
             }
             // mat1 rows, mat2 cols, and mat1 cols == mat2 rows number sums per entry
+            //printf("total %f at row %d, col %d\n", total, curr_row, curr_col);
             set(temp, curr_row, curr_col, total);
             total = 0;
         }
@@ -521,8 +569,8 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             set(result, curr_row, curr_col, curr_val);
         }
     }
-    */
-
+    deallocate_matrix(temp);
+    //*/
 
     return 0;
 }
