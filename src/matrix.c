@@ -101,7 +101,8 @@ int allocate_matrix(matrix **mat, int rows, int cols) {
 
     // stored in row major fashion
     // matrix_struct->data = (double*)calloc(rows * cols, sizeof(double)); // does it need +1 for the terminator?
-    matrix_struct->data = (double*)malloc(rows * cols * sizeof(double));
+    //matrix_struct->data = (double*)malloc(rows * cols * sizeof(double));
+    matrix_struct->data = (double*)calloc(rows * cols, sizeof(double));
 
     if (matrix_struct->data == NULL) {
         return -2;
@@ -114,11 +115,11 @@ int allocate_matrix(matrix **mat, int rows, int cols) {
     // mat[0] = matrix_struct; // use & ?
     *mat = matrix_struct;
 
-    for (int curr_row = 0; curr_row < rows; curr_row += 1) {
-        for (int curr_col = 0; curr_col < cols; curr_col += 1) {
-            set(matrix_struct, curr_row, curr_col, 0);
-        }
-    }
+    //for (int curr_row = 0; curr_row < rows; curr_row += 1) {
+    //    for (int curr_col = 0; curr_col < cols; curr_col += 1) {
+    //        set(matrix_struct, curr_row, curr_col, 0);
+    //    }
+    //}
 
     return 0;
 
