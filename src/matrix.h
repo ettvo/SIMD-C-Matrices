@@ -25,3 +25,4 @@ int abs_matrix(matrix *result, matrix *mat);
 int transpose_matrix(matrix *result, matrix *mat);
 double* get_simd4_ptr(matrix* mat, int row, int col);
 void store_simd4_ptr(double* dest, matrix* mat, int row, int col);
+void check_mul_index(matrix *mat1, matrix *mat2);

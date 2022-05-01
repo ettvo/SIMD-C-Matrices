@@ -451,7 +451,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     
     
     
-    /*
+    ///*
     __m256d mat1_load;
     __m256d mat2_load;
     __m256d temp_total;
@@ -471,8 +471,8 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     int counter_4 = (mat1->cols)/4;
     int counter_tail = (mat1->cols) % 4;
     
-    printf("\ntotal operations (mat1 cols): %d, counter_4: %d, counter_tail: %d\n", mat1->cols, counter_4, counter_tail);
-    printf("dimensions mat1: %d rows, %d cols; dim mat2: %d rows, %d cols\n", mat1->rows, mat1->cols, mat2->rows, mat2->cols);
+    //printf("\ntotal operations (mat1 cols): %d, counter_4: %d, counter_tail: %d\n", mat1->cols, counter_4, counter_tail);
+    //printf("dimensions mat1: %d rows, %d cols; dim mat2: %d rows, %d cols\n", mat1->rows, mat1->cols, mat2->rows, mat2->cols);
     for(int curr_row = 0; curr_row < result->rows; curr_row += 1) { // TODO: fix the segmentation error for non-square matrices
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) { // segmentation error likely due to changes in this part
             // columns of transpose2 == columns of mat1 (adjacent due to row-major order)
@@ -489,12 +489,11 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
                 //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + 4 * curr_row * (mat1->cols + 1))); // subtract 1 from cols?
                 //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + 4 * curr_row * (transpose2->cols + 0)));
                 
-                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + 4 * curr_row * mat1->cols))); // subtract 1 from cols?
-                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + 4 * curr_col * transpose2->cols)); // either transpose2->rows or transpose2->cols
+                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + curr_row * mat1->cols)); // subtract 1 from cols?
+                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + curr_col * transpose2->cols)); // either transpose2->rows or transpose2->cols
                 // curr col becomes row of transpose 2 --> need to multiply curr_col by # of cols of transpose2
                 temp_total = _mm256_mul_pd(mat1_load, mat2_load);
                 _mm256_storeu_pd(multiplied, temp_total);
-                printf("from within counter_4: mult1: %f, mult2: %f, mult3: %f, mult4: %f\n", multiplied[0], multiplied[1], multiplied[2], multiplied[3]);
                 total += multiplied[0] + multiplied[1] + multiplied[2] + multiplied[3]; // issue is with non-square dimensions
                 // need to check that the given item has the given row or counter
             }
@@ -506,18 +505,9 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             //mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols));
             //mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols));
             
-            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols));
-            mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols));
+            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + curr_row * mat1->cols));
+            mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + curr_col * transpose2->cols));
             
-
-            printf("\ntotal operations (mat1 cols): %d, counter_4: %d, counter_tail: %d\n", mat1->cols, counter_4, counter_tail);
-
-            printf("mat1 start: %f\n", (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[0]);
-            printf("mat1 rest: %f, %f, %f\n", (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[1], (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[2], (mat1->data + 4 * counter_4 + 4 * curr_row * mat1->cols)[3]);
-            
-            printf("mat2 start: %f\n", (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[0]);
-            printf("mat2 rest: %f, %f, %f\n", (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[1], (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[2], (transpose2->data + 4 * counter_4 + 4 * curr_col * transpose2->cols)[3]);
-
             temp_total = _mm256_mul_pd(mat1_load, mat2_load);
             _mm256_storeu_pd(multiplied, temp_total);
             for (int counter = 0; counter < counter_tail; counter += 1) {
@@ -533,14 +523,14 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
 
     deallocate_matrix(temp_result);
     deallocate_matrix(transpose2);
-    */
+    //*/
 
 
 
     // use fmadd w/ mat1 = a, mat2 = b, temp = c --> multiply and add to c
     // multiply row of mat1 * col of mat2 --> dont need to transpose mat1?
 
-    ///* non-optimized 
+    /* non-optimized 
     double total = 0;
 
     matrix *temp = NULL;
@@ -570,7 +560,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         }
     }
     deallocate_matrix(temp);
-    //*/
+    */
 
     return 0;
 }
@@ -612,7 +602,7 @@ int pow_matrix(matrix *result, matrix *mat, int pow) {
         mul_matrix(temp, mat, mat);
 
         while (counter > 2) {
-            mul_matrix(result, result, temp);
+            mul_matrix(result, temp, result);
             counter -= 2;
         }
         
@@ -679,6 +669,7 @@ double* get_simd4_ptr(matrix* mat, int row, int col) {
    entries left and zeroes in the remaining spaces to DEST. 
    Assumes row and col are valid coordinates for an entry in mat. */
 void store_simd4_ptr(double* dest, matrix* mat, int row, int col) {
+
     int total_entries = (mat->rows + 1) * (mat->cols + 1);
     // if it doesn't work due to incorrect if-else, just add 1 
     if (total_entries - 4 > (row + 1) * (col + 1)) { // at least 4 entries left
@@ -693,4 +684,47 @@ void store_simd4_ptr(double* dest, matrix* mat, int row, int col) {
         }
         dest = result;
     }
+}
+
+
+void check_mul_index(matrix *mat1, matrix *mat2) {
+    __m256d mat1_load;
+    __m256d mat2_load;
+    
+    double curr_vals[4];
+
+    matrix *transpose2 = NULL;
+    allocate_matrix(&transpose2, mat2->cols, mat2->rows);
+    transpose_matrix(transpose2, mat2);
+
+    int counter_4 = (mat1->cols)/4;
+    //int counter_tail = (mat1->cols) % 4;
+
+    //printf("\nApproach is (data + 4 * counter + 4 * curr_row * mat1->cols)\n");
+    //printf("counter_4 = %d\n", counter_4);
+    
+    for(int curr_row = 0; curr_row < mat1->rows; curr_row += 1) {
+        for (int curr_col = 0; curr_col < mat2->cols; curr_col += 1) {
+            for (int counter = 0; counter < counter_4; counter += 1) {
+                // counter should focus only on the # per row, not anything else 
+                mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + 4 * curr_row * mat1->cols));
+                _mm256_storeu_pd(curr_vals, mat1_load); 
+                //printf("at row %d, col %d, counter %d, mat1 == [%f, %f, %f, %f]\n", curr_row, curr_col, counter, curr_vals[0], curr_vals[1], curr_vals[2], curr_vals[3]);
+                mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + 4 * curr_col * transpose2->cols));
+                _mm256_storeu_pd(curr_vals, mat2_load); 
+                //printf("at row %d, col %d, counter %d, mat2 == [%f, %f, %f, %f]\n", curr_row, curr_col, counter, curr_vals[0], curr_vals[1], curr_vals[2], curr_vals[3]);
+            }
+            
+            mat1_load = _mm256_loadu_pd((mat1->data + curr_row * mat1->cols));
+            mat2_load = _mm256_loadu_pd((transpose2->data + curr_col * transpose2->cols));
+
+            _mm256_storeu_pd(curr_vals, mat1_load); 
+            //printf("at row %d, col %d, counter %d, mat1 == [%f, %f, %f, %f]\n", curr_row, curr_col, counter_4, curr_vals[0], curr_vals[1], curr_vals[2], curr_vals[3]);
+            _mm256_storeu_pd(curr_vals, mat2_load); 
+            //printf("at row %d, col %d, counter %d, mat2 == [%f, %f, %f, %f]\n\n", curr_row, curr_col, counter_4, curr_vals[0], curr_vals[1], curr_vals[2], curr_vals[3]);
+            
+        }
+    }
+
+    deallocate_matrix(transpose2);
 }

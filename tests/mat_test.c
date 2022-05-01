@@ -203,10 +203,9 @@ void mul_square_test(void) {
   }
   mul_matrix(result, mat1, mat2);
   CU_ASSERT_EQUAL(get(result, 0, 0), 30);
-  printf("Wanted %d at row %d, col %d, but got %f\n", 36, 0, 1, get(result, 0, 1));
+  //printf("Wanted %d at row %d, col %d, but got %f\n", 36, 0, 1, get(result, 0, 1));
   CU_ASSERT_EQUAL(get(result, 0, 1), 36);
-
-  printf("Wanted %d at row %d, col %d, but got %f\n", 42, 0, 2, get(result, 0, 2));
+  //printf("Wanted %d at row %d, col %d, but got %f\n", 42, 0, 2, get(result, 0, 2));
   CU_ASSERT_EQUAL(get(result, 0, 2), 42);
   CU_ASSERT_EQUAL(get(result, 1, 0), 66);
   CU_ASSERT_EQUAL(get(result, 1, 1), 81);
@@ -424,7 +423,7 @@ void mul_comp_test1(void) {
   set(mat2, 1, 1, 8);
 
   mul_matrix(result, mat1, mat2);
-  printf("expected %d at row %d, col %d, but got %f\n", 53, 0, 0, get(result, 0, 0));
+  //printf("expected %d at row %d, col %d, but got %f\n", 53, 0, 0, get(result, 0, 0));
   CU_ASSERT_EQUAL(get(result, 0, 0), 53);
   CU_ASSERT_EQUAL(get(result, 0, 1), 62);
   CU_ASSERT_EQUAL(get(result, 1, 0), 69);
@@ -533,6 +532,130 @@ void mul_comp_test1(void) {
 
 }
 
+void check_mul_index_test(void) {
+  matrix *mat1 = NULL;
+  matrix *mat2 = NULL;
+
+  CU_ASSERT_EQUAL(allocate_matrix(&mat1, 3, 3), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat2, 3, 3), 0);
+
+  set(mat1, 0, 0, 12);
+  set(mat1, 0, 1, 8);
+  set(mat1, 0, 2, 4);
+
+  set(mat1, 1, 0, 3);
+  set(mat1, 1, 1, 17);
+  set(mat1, 1, 2, 14);
+
+  set(mat1, 2, 0, 9);
+  set(mat1, 2, 1, 8);
+  set(mat1, 2, 2, 10);
+
+  set(mat2, 0, 0, -5);
+  set(mat2, 0, 1, -19);
+  set(mat2, 0, 2, -3);
+
+  set(mat2, 1, 0, -6);
+  set(mat2, 1, 1, -15);
+  set(mat2, 1, 2, -9);
+
+  set(mat2, 2, 0, -7);
+  set(mat2, 2, 1, -8);
+  set(mat2, 2, 2, -16);
+
+  //printf("************START MAT1, MAT2************\n");
+
+  check_mul_index(mat1, mat2); // mat2 transpose
+  /* should see:
+  mat1  [12, 8, 4, X]
+        [3, 17, 14, X]
+        [9, 8, 10, X]
+
+  mat2_T  [-5, -19, -3, X] --> [-5, -6, -7, X]
+          [-6, -15, -9, X] --> [-19, -15, -8, X]
+          [-7, -8, -16, X] --> [-3, -9, -16, X]
+
+  at row 0, col 0, counter 0, mat1 == [12.000000, 8.000000, 4.000000, 3.000000]
+  at row 0, col 0, counter 0, mat2 == [-5.000000, -6.000000, -7.000000, -19.000000]
+
+  at row 0, col 1, counter 0, mat1 == [12.000000, 8.000000, 4.000000, 3.000000]
+  at row 0, col 1, counter 0, mat2 == [-19, -15, -8, X]
+
+  at row 0, col 2, counter 0, mat1 == [12.000000, 8.000000, 4.000000, 3.000000]
+  at row 0, col 2, counter 0, mat2 == [-3, -9, -16, X]
+
+  */
+
+  matrix *mat3 = NULL; // same dimensions
+  CU_ASSERT_EQUAL(allocate_matrix(&mat3, 4, 4), 0);
+
+  set(mat3, 0, 0, 1);
+  set(mat3, 0, 1, 2);
+  set(mat3, 0, 2, 3);
+  set(mat3, 0, 3, 4);
+
+  set(mat3, 1, 0, 5);
+  set(mat3, 1, 1, 6);
+  set(mat3, 1, 2, 7);
+  set(mat3, 1, 3, 8);
+
+  set(mat3, 2, 0, 9);
+  set(mat3, 2, 1, 10);
+  set(mat3, 2, 2, 11);
+  set(mat3, 2, 3, 12);
+  
+  set(mat3, 3, 0, 13);
+  set(mat3, 3, 1, 14);
+  set(mat3, 3, 2, 15);
+  set(mat3, 3, 3, 16);
+
+  matrix *mat4 = NULL; // same dimensions
+  CU_ASSERT_EQUAL(allocate_matrix(&mat4, 4, 4), 0);
+  
+  set(mat4, 0, 0, -1);
+  set(mat4, 0, 1, -2);
+  set(mat4, 0, 2, -3);
+  set(mat4, 0, 3, -4);
+
+  set(mat4, 1, 0, -5);
+  set(mat4, 1, 1, -6);
+  set(mat4, 1, 2, -7);
+  set(mat4, 1, 3, -8);
+
+  set(mat4, 2, 0, -9);
+  set(mat4, 2, 1, -10);
+  set(mat4, 2, 2, -11);
+  set(mat4, 2, 3, -12);
+  
+  set(mat4, 3, 0, -13);
+  set(mat4, 3, 1, -14);
+  set(mat4, 3, 2, -15);
+  set(mat4, 3, 3, -16);
+
+
+  /* should see:
+  mat3  [1, 2, 3, 4]
+        [5, 6, 7, 8]
+        [9, 10, 11, 12]
+        [13, 14, 15, 16]
+
+  mat4  [-1, -2, -3, -4] -->    [-1, -5, -9, -13]
+        [-5, -6, -7, -8] -->    [-2, -6, -10, -14]
+        [-9, -10, -11, -12] --> [-3, -7, -11, -15]
+        [-13, -14, -15, -16] --> [-4, -8, -12, -16]
+  */
+
+  //printf("************START MAT3, MAT4************\n");
+  //check_mul_index(mat3, mat4); // mat4 transpose
+
+  deallocate_matrix(mat1);
+  deallocate_matrix(mat2);
+  deallocate_matrix(mat3);
+  deallocate_matrix(mat4);
+
+
+}
+
 
 /************* Test Runner Code goes here **************/
 
@@ -569,7 +692,8 @@ int main (void)
         (CU_add_test(pSuite, "get_test", get_test) == NULL) ||
         (CU_add_test(pSuite, "set_test", set_test) == NULL) ||
         (CU_add_test(pSuite, "transpose_test", transpose_test) == NULL) ||
-        (CU_add_test(pSuite, "mul_comp_test1", mul_comp_test1) == NULL)
+        (CU_add_test(pSuite, "mul_comp_test1", mul_comp_test1) == NULL) ||
+        (CU_add_test(pSuite, "check_mul_index_test", check_mul_index_test) == NULL)
      )
    {
       CU_cleanup_registry();
