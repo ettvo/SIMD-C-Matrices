@@ -256,13 +256,24 @@ void fill_matrix(matrix *mat, double val) {
     */
    double fill[4] = {val, val, val, val};
     __m256d temp = _mm256_loadu_pd(fill);
+
+    //#pragma omp parallel for
     for (int counter = 0; counter < ((mat->rows * mat->cols)/4); counter += 1) {
         // temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
         _mm256_storeu_pd((mat->data + 4 * counter), temp);
     }
-    for (int counter = 0; counter < ((mat->rows * mat->cols) % 4); counter += 1) {
-        mat->data[((mat->rows * mat->cols)/4) * 4 + counter] = val;
+
+    switch ((mat->rows * mat->cols) % 4) {
+        case 3:
+            mat->data[((mat->rows * mat->cols)/4) * 4 + 2] = val;
+        case 2:
+            mat->data[((mat->rows * mat->cols)/4) * 4 + 1] = val;
+        case 1:
+            mat->data[((mat->rows * mat->cols)/4) * 4 + 0] = val;
     }
+    //for (int counter = 0; counter < ((mat->rows * mat->cols) % 4); counter += 1) {
+    //    mat->data[((mat->rows * mat->cols)/4) * 4 + counter] = val;
+    //}
     //free(ptr);
 }
 
@@ -385,18 +396,18 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     int counter_tail = (result->rows * result->cols) % 4;
     __m256d temp;
     __m256d mat1_load;
-        //double* ptr = (double*)malloc(sizeof(double*));
-        // floating point representation = has a sign bit
+    //double* ptr = (double*)malloc(sizeof(double*));
+    // floating point representation = has a sign bit
     #pragma omp parallel for
-        for (int counter = 0; counter < counter_4; counter += 1) {
-            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
-            temp = _mm256_loadu_pd((mat2->data + 4 * counter));
-            temp = _mm256_add_pd(temp, mat1_load);
-            _mm256_storeu_pd((result->data + 4 * counter), temp);
-        }
-        //for (int counter = 0; counter < counter_tail; counter += 1) {
-        //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] + mat2->data[counter_4 * 4 + counter];
-        //}
+    for (int counter = 0; counter < counter_4; counter += 1) {
+        mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
+        temp = _mm256_loadu_pd((mat2->data + 4 * counter));
+        temp = _mm256_add_pd(temp, mat1_load);
+        _mm256_storeu_pd((result->data + 4 * counter), temp);
+    }
+    //for (int counter = 0; counter < counter_tail; counter += 1) {
+    //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] + mat2->data[counter_4 * 4 + counter];
+    //}
     mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4));
     temp = _mm256_loadu_pd((mat2->data + 4 * counter_4));
     temp = _mm256_add_pd(temp, mat1_load);
@@ -507,7 +518,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
 
     //#pragma omp parallel for
 
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (int counter = 0; counter < result->rows * result->cols; counter += 1) {
         curr_row = counter/(result->cols);
         curr_col = counter - (curr_row * result->cols);
