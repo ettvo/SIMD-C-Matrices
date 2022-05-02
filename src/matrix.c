@@ -239,21 +239,29 @@ void fill_matrix(matrix *mat, double val) {
         }
     }
     */
+   /*
+   double fill[4] = {val, val, val, val};
+    __m256d temp = _mm256_loadu_pd(fill);
 
    // Took time 0.06 sec
-   #pragma omp parallel 
-    {   
-        double fill[4] = {val, val, val, val};
-        __m256d temp = _mm256_loadu_pd(fill);
+   #pragma omp parallel for 
         for (int counter = 0; counter < ((mat->rows * mat->cols)/4); counter += 1) {
             // temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
             _mm256_storeu_pd((mat->data + 4 * counter), temp);
         }
-        double tail_arr[4];
-        _mm256_storeu_pd(tail_arr, temp);
+    #pragma omp parallel for 
         for (int counter = 0; counter < ((mat->rows * mat->cols) % 4); counter += 1) {
-            mat->data[((mat->rows * mat->cols)/4) * 4 + counter] = tail_arr[counter];
+            mat->data[((mat->rows * mat->cols)/4) * 4 + counter] = val;
         }
+    */
+   double fill[4] = {val, val, val, val};
+    __m256d temp = _mm256_loadu_pd(fill);
+    for (int counter = 0; counter < ((mat->rows * mat->cols)/4); counter += 1) {
+        // temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
+        _mm256_storeu_pd((mat->data + 4 * counter), temp);
+    }
+    for (int counter = 0; counter < ((mat->rows * mat->cols) % 4); counter += 1) {
+        mat->data[((mat->rows * mat->cols)/4) * 4 + counter] = val;
     }
     //free(ptr);
 }
@@ -275,17 +283,16 @@ int abs_matrix(matrix *result, matrix *mat) {
     }
     */
 
+    int counter_4 = (mat->rows * mat->cols)/4;
+    int counter_tail = (mat->rows * mat->cols) % 4;
     // took 0.08 sec
-    #pragma omp parallel
-    {
-        int counter_4 = (mat->rows * mat->cols)/4;
-        int counter_tail = (mat->rows * mat->cols) % 4;
         //double* ptr = (double*)malloc(sizeof(double*));
-        __m256d temp;
-        double neg[4] = {-1, -1, -1, -1};
-        __m256d negator = _mm256_loadu_pd(neg);
-        __m256d negated_arr;
-        // floating point representation = has a sign bit
+    __m256d temp;
+    double neg[4] = {-1, -1, -1, -1};
+    __m256d negator = _mm256_loadu_pd(neg);
+    __m256d negated_arr;
+    // floating point representation = has a sign bit
+    #pragma omp parallel for
         for (int counter = 0; counter < counter_4; counter += 1) {
             //temp = _mm256_loadu_pd((__m256d*) (mat->data + 4 * counter));
             temp = _mm256_loadu_pd((mat->data + 4 * counter));
@@ -294,23 +301,24 @@ int abs_matrix(matrix *result, matrix *mat) {
             _mm256_storeu_pd((result->data + 4 * counter), temp);
         }
 
-        temp = _mm256_loadu_pd((mat->data + 4 * counter_4));
-        negated_arr = _mm256_mul_pd(negator, temp);
-        temp = _mm256_max_pd(negated_arr, temp);
-        double tail_arr[4];
-        _mm256_storeu_pd(tail_arr, temp);
-        for (int counter = 0; counter < counter_tail; counter += 1) {
-            result->data[counter_4 * 4 + counter] = tail_arr[counter];
-        }
+    temp = _mm256_loadu_pd((mat->data + 4 * counter_4));
+    negated_arr = _mm256_mul_pd(negator, temp);
+    temp = _mm256_max_pd(negated_arr, temp);
+    double tail_arr[4];
+    _mm256_storeu_pd(tail_arr, temp);
+    //for (int counter = 0; counter < counter_tail; counter += 1) {
+    //    result->data[counter_4 * 4 + counter] = tail_arr[counter];
+    //}
+    
+    switch (counter_tail) {
+        case 3:
+            result->data[counter_4 * 4 + 2] = tail_arr[2];
+        case 2:
+            result->data[counter_4 * 4 + 1] = tail_arr[1];
+        case 1:
+            result->data[counter_4 * 4 + 0] = tail_arr[0];
     }
 
-    //for (int counter = 0; counter < counter_tail; counter += 1) {
-    //    if (mat->data[counter_4 * 4 + counter] > 0) {
-    //        result->data[counter_4 * 4 + counter] = mat->data[counter_4 * 4 + counter];
-    //    } else {
-    //        result->data[counter_4 * 4 + counter] = -mat->data[counter_4 * 4 + counter];
-    //    }
-    //}
     return 0;
 }
 
@@ -377,10 +385,9 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     int counter_tail = (result->rows * result->cols) % 4;
     __m256d temp;
     __m256d mat1_load;
-    #pragma omp parallel 
-    {
         //double* ptr = (double*)malloc(sizeof(double*));
         // floating point representation = has a sign bit
+    #pragma omp parallel for
         for (int counter = 0; counter < counter_4; counter += 1) {
             mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
             temp = _mm256_loadu_pd((mat2->data + 4 * counter));
@@ -390,18 +397,23 @@ int add_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         //for (int counter = 0; counter < counter_tail; counter += 1) {
         //    result->data[counter_4 * 4 + counter] = mat1->data[counter_4 * 4 + counter] + mat2->data[counter_4 * 4 + counter];
         //}
-    }
     mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4));
     temp = _mm256_loadu_pd((mat2->data + 4 * counter_4));
     temp = _mm256_add_pd(temp, mat1_load);
     double tail_arr[4];
     _mm256_storeu_pd(tail_arr, temp);
-    #pragma omp parallel 
-    {
-        for (int counter = 0; counter < counter_tail; counter += 1) {
-            result->data[counter_4 * 4 + counter] = tail_arr[counter];
-        }
+    //for (int counter = 0; counter < counter_tail; counter += 1) {
+    //    result->data[counter_4 * 4 + counter] = tail_arr[counter];
+    //}
+    switch (counter_tail) {
+        case 3:
+            result->data[counter_4 * 4 + 2] = tail_arr[2];
+        case 2:
+            result->data[counter_4 * 4 + 1] = tail_arr[1];
+        case 1:
+            result->data[counter_4 * 4 + 0] = tail_arr[0];
     }
+
     return 0;
 }
 
@@ -611,12 +623,26 @@ int transpose_matrix(matrix *result, matrix *mat) {
         return -1;
     }
     double val;
+    int curr_row = 0;
+    int curr_col = 0;
+    ///*
+    //#pragma omp parallel for
+    for (int counter = 0; counter < mat->cols * mat->rows; counter += 1) {
+        curr_row = counter/(mat->cols);
+        curr_col = counter - (curr_row * mat->cols);
+        val = get(mat, curr_row, curr_col);
+        set(result, curr_col, curr_row, val); 
+    }
+    //*/
+
+    /*
     for (int mat_row = 0; mat_row < mat->rows; mat_row += 1) {
         for (int mat_col = 0; mat_col < mat->cols; mat_col += 1) {
             val = get(mat, mat_row, mat_col);
             set(result, mat_col, mat_row, val); 
         }
     }
+    */
     return 0; 
 }
 
