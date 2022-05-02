@@ -357,6 +357,7 @@ int neg_matrix(matrix *result, matrix *mat) {
     __m256d temp;
     __m256d negator = _mm256_loadu_pd(neg);
     // floating point representation = has a sign bit
+    #pragma omp parallel for
     for (int counter = 0; counter < counter_4; counter += 1) {
         temp = _mm256_loadu_pd((mat->data + 4 * counter));
         temp = _mm256_mul_pd(negator, temp);
@@ -454,6 +455,7 @@ int sub_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     __m256d temp;
     __m256d mat1_load;
     // floating point representation = has a sign bit
+    #pragma omp parallel for
     for (int counter = 0; counter < counter_4; counter += 1) {
         mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter));
         temp = _mm256_loadu_pd((mat2->data + 4 * counter));
@@ -496,11 +498,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         return -1;
     }
 
-    __m256d mat1_load;
-    __m256d mat2_load;
-    __m256d temp_total;
-    double total;
-    double multiplied[4];
+    //double total;
     matrix *temp_result = NULL;
     allocate_matrix(&temp_result, result->rows, result->cols);
 
@@ -508,21 +506,30 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
     allocate_matrix(&transpose2, mat2->cols, mat2->rows);
     transpose_matrix(transpose2, mat2);
 
-    int counter_4 = (mat1->cols)/4;
-    int counter_tail = (mat1->cols) % 4;
+    //int counter_4 = (mat1->cols)/4;
+    //int counter_tail = (mat1->cols) % 4;
     // or (int counter = 0; counter < mat->cols * mat->rows; counter += 1) {
     //    curr_row = counter/(mat->cols);
     //    curr_col = counter - (curr_row * mat->cols);
-    int curr_row;
-    int curr_col;
+    //int curr_row;
+    //int curr_col;
 
     //#pragma omp parallel for
-
+    
     //#pragma omp parallel for
+
+    int counter_4 = (mat1->cols)/4;
+    int counter_tail = (mat1->cols) % 4;
+
+    #pragma omp parallel for
     for (int counter = 0; counter < result->rows * result->cols; counter += 1) {
-        curr_row = counter/(result->cols);
-        curr_col = counter - (curr_row * result->cols);
-        total = 0;
+        __m256d mat1_load;
+        __m256d mat2_load;
+        __m256d temp_total;
+        double multiplied[4];
+        int curr_row = counter/(result->cols);
+        int curr_col = counter - (curr_row * result->cols);
+        double total = 0;
         //#pragma omp parallel for reduction (+ : total)
         for (int counter = 0; counter < counter_4; counter += 1) {
             mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + curr_row * mat1->cols));
@@ -537,6 +544,10 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
         temp_total = _mm256_mul_pd(mat1_load, mat2_load);
         _mm256_storeu_pd(multiplied, temp_total);
              
+        //for (int counter = 0; counter < counter_tail; counter += 1) {
+        //        total += multiplied[counter];
+        //}
+        ///*
         switch (counter_tail) {
         case 3:
             total += multiplied[2];
@@ -544,11 +555,11 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             total += multiplied[1];
         case 1:
             total += multiplied[0];
-        }
+        } //*/
 
         set(result, curr_row, curr_col, total);
 
-    }
+    } 
 
 
     /* no OpenMP

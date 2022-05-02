@@ -656,6 +656,44 @@ void check_mul_index_test(void) {
 
 }
 
+void mul_comp_test2(void) {
+  matrix *result = NULL;
+  matrix *mat1 = NULL;
+  matrix *mat2 = NULL;
+  CU_ASSERT_EQUAL(allocate_matrix(&mat1, 2, 1), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&mat2, 1, 7), 0);
+  CU_ASSERT_EQUAL(allocate_matrix(&result, 2, 7), 0);
+
+  set(mat1, 0, 0, 12);
+  set(mat1, 1, 0, 3);
+
+  set(mat2, 0, 0, 8);
+  set(mat2, 0, 1, 9);
+  set(mat2, 0, 2, 10);
+  set(mat2, 0, 3, 11);
+  set(mat2, 0, 4, 12);
+  set(mat2, 0, 5, 13);
+  set(mat2, 0, 6, 14);
+
+  mul_matrix(result, mat1, mat2);
+
+  CU_ASSERT_EQUAL(get(result, 0, 0), 96);
+  CU_ASSERT_EQUAL(get(result, 0, 1), 108);
+  CU_ASSERT_EQUAL(get(result, 0, 2), 120);
+  CU_ASSERT_EQUAL(get(result, 0, 3), 132);
+  CU_ASSERT_EQUAL(get(result, 0, 4), 144);
+  CU_ASSERT_EQUAL(get(result, 0, 5), 156);
+  CU_ASSERT_EQUAL(get(result, 0, 6), 168);
+
+  CU_ASSERT_EQUAL(get(result, 1, 0), 24);
+  CU_ASSERT_EQUAL(get(result, 1, 1), 27);
+  CU_ASSERT_EQUAL(get(result, 1, 2), 30);
+  CU_ASSERT_EQUAL(get(result, 1, 3), 33);
+  CU_ASSERT_EQUAL(get(result, 1, 4), 36);
+  CU_ASSERT_EQUAL(get(result, 1, 5), 39);
+  CU_ASSERT_EQUAL(get(result, 1, 6), 42);
+
+}
 
 /************* Test Runner Code goes here **************/
 
@@ -693,6 +731,7 @@ int main (void)
         (CU_add_test(pSuite, "set_test", set_test) == NULL) ||
         (CU_add_test(pSuite, "transpose_test", transpose_test) == NULL) ||
         (CU_add_test(pSuite, "mul_comp_test1", mul_comp_test1) == NULL) ||
+        (CU_add_test(pSuite, "mul_comp_test2", mul_comp_test2) == NULL) ||
         (CU_add_test(pSuite, "check_mul_index_test", check_mul_index_test) == NULL)
      )
    {
