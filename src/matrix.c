@@ -499,7 +499,48 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
 
     int counter_4 = (mat1->cols)/4;
     int counter_tail = (mat1->cols) % 4;
-    
+    // or (int counter = 0; counter < mat->cols * mat->rows; counter += 1) {
+    //    curr_row = counter/(mat->cols);
+    //    curr_col = counter - (curr_row * mat->cols);
+    int curr_row;
+    int curr_col;
+
+    //#pragma omp parallel for
+
+    #pragma omp parallel for
+    for (int counter = 0; counter < result->rows * result->cols; counter += 1) {
+        curr_row = counter/(result->cols);
+        curr_col = counter - (curr_row * result->cols);
+        total = 0;
+        //#pragma omp parallel for reduction (+ : total)
+        for (int counter = 0; counter < counter_4; counter += 1) {
+            mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter + curr_row * mat1->cols));
+            mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter + curr_col * transpose2->cols)); 
+            temp_total = _mm256_mul_pd(mat1_load, mat2_load);
+            _mm256_storeu_pd(multiplied, temp_total);
+            total += multiplied[0] + multiplied[1] + multiplied[2] + multiplied[3];
+        }
+        mat1_load = _mm256_loadu_pd((mat1->data + 4 * counter_4 + curr_row * mat1->cols));
+        mat2_load = _mm256_loadu_pd((transpose2->data + 4 * counter_4 + curr_col * transpose2->cols));
+            
+        temp_total = _mm256_mul_pd(mat1_load, mat2_load);
+        _mm256_storeu_pd(multiplied, temp_total);
+             
+        switch (counter_tail) {
+        case 3:
+            total += multiplied[2];
+        case 2:
+            total += multiplied[1];
+        case 1:
+            total += multiplied[0];
+        }
+
+        set(result, curr_row, curr_col, total);
+
+    }
+
+
+    /* no OpenMP
     for(int curr_row = 0; curr_row < result->rows; curr_row += 1) {
         for (int curr_col = 0; curr_col < result->cols; curr_col += 1) {
             total = 0;
@@ -521,6 +562,7 @@ int mul_matrix(matrix *result, matrix *mat1, matrix *mat2) {
             set(result, curr_row, curr_col, total);
         }
     }
+    */
 
     deallocate_matrix(temp_result);
     deallocate_matrix(transpose2);
